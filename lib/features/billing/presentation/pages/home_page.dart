@@ -116,7 +116,7 @@ class _HomePageState extends State<HomePage> {
                   if (_isCameraOn && mounted) _scannerController.start();
                 },
           icon: Icons.payment,
-          label: 'Review Order',
+          label: 'Xem don hang',
         );
       }),
     );
@@ -222,7 +222,7 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 16),
           const Text(
-            'Camera is turned off',
+            'Camera dang tat',
             style: TextStyle(
                 color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
           ),
@@ -230,7 +230,7 @@ class _HomePageState extends State<HomePage> {
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 32),
             child: Text(
-              'Turn on your camera to start scanning barcodes and items automatically.',
+              'Bat camera de bat dau quet ma vach va them san pham tu dong.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white70, fontSize: 12),
             ),
@@ -245,7 +245,7 @@ class _HomePageState extends State<HomePage> {
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
             icon: const Icon(Icons.videocam),
-            label: const Text('Turn on Camera',
+            label: const Text('Bat camera',
                 style: TextStyle(fontWeight: FontWeight.bold)),
             onPressed: () {
               setState(() => _isCameraOn = true);
@@ -342,10 +342,10 @@ class _HomePageState extends State<HomePage> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Scanned Items',
+                        const Text('San pham da quet',
                             style: TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.w600)),
-                        Text('$totalItems items total',
+                        Text('Tong $totalItems san pham',
                             style: const TextStyle(
                                 fontSize: 12, color: Colors.grey)),
                       ],
@@ -353,7 +353,7 @@ class _HomePageState extends State<HomePage> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text('TOTAL PRICE',
+                        const Text('TONG TIEN',
                             style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
@@ -421,13 +421,13 @@ class _HomePageState extends State<HomePage> {
                 Icon(Icons.shopping_basket, size: 40, color: Colors.grey[300]),
           ),
           const SizedBox(height: 16),
-          const Text('List is empty',
+          const Text('Danh sach trong',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           const SizedBox(height: 8),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 40),
             child: Text(
-              'Scanned items will appear here as you scan them with the camera above.',
+              'Cac san pham da quet se hien thi o day khi ban dung camera phia tren de quet.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey, fontSize: 14),
             ),

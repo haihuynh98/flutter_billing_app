@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Billing App</string>
+	<string>POS Ban hang</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -46,12 +46,12 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>We need camera access to scan barcodes.</string>
+	<string>Ung dung can quyen truy cap camera de quet ma vach.</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>We need bluetooth to connect to thermal printers.</string>
+	<string>Ung dung can Bluetooth de ket noi voi may in nhiet.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>We need bluetooth to connect to thermal printers.</string>
+	<string>Ung dung can Bluetooth de ket noi voi may in nhiet.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>We need location access to find nearby printers.</string>
+	<string>Ung dung can quyen vi tri de tim may in Bluetooth o gan.</string>
 </dict>
 </plist>

@@ -43,7 +43,7 @@ class _AddProductPageState extends State<AddProductPage> {
       if (existingProduct != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Product with barcode "$_barcode" already exists!'),
+            content: Text('San pham co ma vach "$_barcode" da ton tai!'),
             backgroundColor: Colors.red,
           ),
         );
@@ -73,7 +73,7 @@ class _AddProductPageState extends State<AddProductPage> {
                 size: 28, color: Theme.of(context).primaryColor),
             onPressed: () => context.pop(),
           ),
-          title: const Text('Add Product',
+          title: const Text('Them san pham',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           centerTitle: true,
         ),
@@ -85,7 +85,7 @@ class _AddProductPageState extends State<AddProductPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const InputLabel(text: 'Barcode'),
+                  const InputLabel(text: 'Ma vach'),
                   Row(
                     children: [
                       Expanded(
@@ -93,10 +93,10 @@ class _AddProductPageState extends State<AddProductPage> {
                           key: ValueKey(_barcode),
                           initialValue: _barcode,
                           decoration: const InputDecoration(
-                            hintText: 'Scan or enter barcode',
+                            hintText: 'Quet hoac nhap ma vach',
                           ),
                           validator:
-                              AppValidators.required('Please enter a barcode'),
+                              AppValidators.required('Vui long nhap ma vach'),
                           onSaved: (value) => _barcode = value!,
                         ),
                       ),
@@ -116,20 +116,21 @@ class _AddProductPageState extends State<AddProductPage> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  const Text('Tap the icon to open camera scanner',
+                  const Text('Nhan bieu tuong de mo camera quet ma',
                       style: TextStyle(fontSize: 12, color: Color(0xFF4C669A))),
                   const SizedBox(height: 24),
-                  const InputLabel(text: 'Product Name'),
+                  const InputLabel(text: 'Ten san pham'),
                   TextFormField(
                     decoration: const InputDecoration(
-                      hintText: 'e.g. Basmati Rice',
+                      hintText: 'Vi du: Gao ST25',
                     ),
                     textCapitalization: TextCapitalization.words,
-                    validator: AppValidators.required('Please enter a name'),
+                    validator:
+                        AppValidators.required('Vui long nhap ten san pham'),
                     onSaved: (value) => _name = value!,
                   ),
                   const SizedBox(height: 24),
-                  const InputLabel(text: 'Price'),
+                  const InputLabel(text: 'Gia ban'),
                   TextFormField(
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
@@ -152,7 +153,7 @@ class _AddProductPageState extends State<AddProductPage> {
         bottomNavigationBar: PrimaryButton(
           onPressed: _submit,
           icon: Icons.add_circle,
-          label: 'Add Product',
+          label: 'Them san pham',
         ));
   }
 }
