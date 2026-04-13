@@ -1,5 +1,5 @@
 name: billing_app
-description: A new Flutter project.
+description: Ứng dụng bán hàng POS di động - quét mã vạch, in hóa đơn nhiệt.
 publish_to: 'none'
 version: 1.0.0+1
 

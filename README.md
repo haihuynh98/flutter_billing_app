@@ -1,101 +1,158 @@
-# 🛒 Mobile POS & Billing App 
+# Ứng Dụng Bán Hàng POS Di Động
 
-A feature-rich, high-performance offline-first billing and Point of Sale (POS) application built with Flutter. Designed for seamless retail checkout operations featuring barcode scanning, thermal Bluetooth printing, and robust local data persistence.
+Ứng dụng thanh toán và bán hàng tại điểm bán (POS) hoạt động offline, được xây dựng bằng Flutter. Thiết kế cho hoạt động bán lẻ với tính năng quét mã vạch, in hóa đơn nhiệt qua Bluetooth và lưu trữ dữ liệu cục bộ.
 
-## Screenshot
+## Video giới thiệu
 
 
 https://github.com/user-attachments/assets/f2d16454-5408-43b3-b207-cd843bbc2c9e
 
 
+## Tính năng chính
 
-## 🎯 Project Scope
+- **Quản lý sản phẩm**: Thêm, sửa, xóa sản phẩm với hỗ trợ mã vạch/QR code.
+- **Thanh toán thông minh**: Quét mã vạch bằng camera hoặc nhập thủ công, tự động tính tổng tiền.
+- **In hóa đơn nhiệt Bluetooth**: Kết nối trực tiếp với máy in nhiệt qua Bluetooth (`print_bluetooth_thermal`).
+- **Cài đặt cửa hàng**: Quản lý thông tin cửa hàng hiển thị trên hóa đơn.
+- **Hoạt động offline**: Sử dụng `Hive` để lưu trữ dữ liệu NoSQL cục bộ, không cần internet.
 
-This application serves as a complete offline POS system for small to medium-sized retail shops. It streamlines the checkout process, catalog management, and receipt generation securely entirely on-device.
+## Công nghệ sử dụng
 
-### Core Features:
-- **Product Management System**: Complete CRUD operations for inventory items with barcode/QR code support.
-- **Smart Checkout System**: Rapid cart building via camera-based barcode scanning or manual entry, and robust order calculation functionality.
-- **Bluetooth Thermal Printing**: Direct integration with thermal printers (`print_bluetooth_thermal`) to instantly output physical receipts.
-- **Shop Settings & Customization**: Centrally managed shop details printed dynamically on receipts.
-- **Offline-First Architecture**: Powered by `Hive` for lightning-fast localized NoSQL data storage. No active internet connectivity required.
-
-## 🛠 Tech Stack & Architecture
-
-Built leveraging industry-standard architectural principles (Clean Architecture & Feature-Driven Design) ensuring scalability, separation of concerns, and robust testability. 
+Xây dựng theo kiến trúc Clean Architecture & Feature-Driven Design.
 
 - **Framework**: [Flutter](https://flutter.dev/) (SDK >=3.1.0)
-- **State Management**: `flutter_bloc`
+- **Quản lý trạng thái**: `flutter_bloc`
 - **Dependency Injection**: `get_it`
-- **Routing**: `go_router`
-- **Local Database**: `hive` & `hive_flutter`
-- **Data Modeling**: `json_serializable`, `equatable`
-- **Functional Programming**: `fpdart`
-- **Hardware Integrations**: `mobile_scanner` (barcodes), `print_bluetooth_thermal`
+- **Điều hướng**: `go_router`
+- **Cơ sở dữ liệu cục bộ**: `hive` & `hive_flutter`
+- **Mô hình dữ liệu**: `json_serializable`, `equatable`
+- **Lập trình hàm**: `fpdart`
+- **Tích hợp phần cứng**: `mobile_scanner` (quét mã vạch), `print_bluetooth_thermal` (in Bluetooth)
 
-## 📁 File Structure
+## Cấu trúc thư mục
 
-The codebase is organized using a **Feature-First Clean Architecture** utilizing domain-driven concepts.
+Mã nguồn được tổ chức theo mô hình **Feature-First Clean Architecture**.
 
 ```text
 lib/
-├── core/                       # Core application utilities and shared components
-│   ├── data/                   # Global data sources (e.g., Hive initialization)
-│   ├── error/                  # Standardized Failure/Exception models (fpdart compatible)
-│   ├── theme/                  # UI aesthetics, typography, styling
-│   ├── usecase/                # Base UseCase contracts
-│   ├── utils/                  # Helpers (e.g., PrinterHelper, formatters)
-│   ├── widgets/                # Reusable global UI widgets (AppBars, generic buttons)
-│   └── service_locator.dart    # get_it dependency injection setup
+├── core/                       # Các tiện ích và thành phần dùng chung
+│   ├── data/                   # Nguồn dữ liệu toàn cục (khởi tạo Hive)
+│   ├── error/                  # Mô hình Failure/Exception (tương thích fpdart)
+│   ├── theme/                  # Giao diện, kiểu chữ, phong cách
+│   ├── usecase/                # Hợp đồng UseCase cơ sở
+│   ├── utils/                  # Trợ giúp (PrinterHelper, định dạng...)
+│   ├── widgets/                # Widget UI tái sử dụng
+│   └── service_locator.dart    # Cài đặt dependency injection (get_it)
 │
-└── features/                   # Independent feature modules
-    ├── billing/                # Core POS operations: Cart, Checkout, Invoice Generation
-    ├── product/                # Inventory management: Adding, Listing, Scanning products
-    ├── settings/               # App configuration: Printer connections, App settings
-    └── shop/                   # Shop details configuration
+└── features/                   # Các module tính năng độc lập
+    ├── billing/                # Thanh toán: Giỏ hàng, Checkout, Tạo hóa đơn
+    ├── product/                # Quản lý sản phẩm: Thêm, Danh sách, Quét mã
+    ├── settings/               # Cài đặt: Kết nối máy in, Cấu hình ứng dụng
+    └── shop/                   # Cấu hình thông tin cửa hàng
 ```
 
-*Note: Each feature is further subdivided internally into Clean Architecture layers: `data`, `domain`, and `presentation`.*
+*Ghi chú: Mỗi tính năng được chia thành các lớp Clean Architecture: `data`, `domain` và `presentation`.*
 
-## 💡 Use Cases
+## Hướng dẫn cài đặt & Build
 
-- **Rapid Billing Entry**: A cashier launches the app, navigates to the checkout page, and uses the device camera to instantly scan product barcodes. The products are added to the cart, the total is calculated including taxes, and a receipt is finalized.
-- **Physical Receipt Generation**: After checkout confirmation, the app triggers a connected external Bluetooth thermal POS printer to instantly print an itemized paper receipt with the shop’s header.
-- **Inventory Sideloading**: A manager opens the Product feature to add new stock to the local database, taking a picture of the barcode to bind the SKU for future lightning-fast checkouts.
-- **No-Connection Operation**: The business operates a stall at an exhibition with poor networking. The app functions entirely via its embedded Hive local database and Bluetooth, completely undisturbed by network drops.
+### Yêu cầu hệ thống
 
-## 🚀 Getting Started
+- **Flutter SDK** phiên bản `>=3.1.0`
+- **Android Studio** (cho Android) hoặc **Xcode** (cho iOS)
+- **Dart SDK** (đi kèm Flutter)
+- *Tùy chọn*: Thiết bị Android/iOS thật và máy in nhiệt Bluetooth để kiểm thử tính năng phần cứng.
 
-### Prerequisites
-- Flutter SDK `^3.1.0` or higher
-- Android Studio / Xcode for emulators and building.
-- *Optional*: A physical Android/iOS device and a Bluetooth Thermal Printer for testing hardware integrations natively.
+### Bước 1: Clone dự án
 
-### Installation
+```bash
+git clone <đường_dẫn_repository>
+cd billing_app
+```
 
-1. Clone the repository and navigate to the project directory:
-   ```bash
-   git clone <repository_url>
-   cd billing_app
-   ```
+### Bước 2: Cài đặt dependencies
 
-2. Fetch dependencies:
-   ```bash
-   flutter pub get
-   ```
+```bash
+flutter pub get
+```
 
-3. Run code generation (required for Hive adapters and JSON serialization):
-   ```bash
-   dart run build_runner build --delete-conflicting-outputs
-   ```
+### Bước 3: Chạy code generation
 
-4. Run the project:
-   ```bash
-   flutter run
-   ```
+Bắt buộc cho Hive adapters và JSON serialization:
 
-## 🤝 Contributing Guidelines
-As a senior-focused project, please adhere to:
-1. **Clean Architecture Rules**: Maintain strict boundaries between `domain`, `data`, and `presentation` layers.
-2. **Immutable States**: Emit only immutable states from BLoCs utilizing `equatable`.
-3. **No Direct Exceptions in Domain**: Utilize `fpdart`'s `Either<Failure, Type>` pattern to handle control flow for exceptions.
+```bash
+dart run build_runner build --delete-conflicting-outputs
+```
+
+### Bước 4: Chạy ứng dụng
+
+```bash
+# Chạy ở chế độ debug
+flutter run
+
+# Build APK (Android)
+flutter build apk --release
+
+# Build IPA (iOS)
+flutter build ios --release
+```
+
+## Cấu hình máy in Bluetooth
+
+### Các bước kết nối máy in nhiệt:
+
+1. **Bật Bluetooth** trên điện thoại.
+2. **Ghép nối máy in** trong phần Cài đặt Bluetooth của điện thoại.
+3. Mở ứng dụng, vào **Cài đặt** > phần **Phần cứng**.
+4. Nhấn nút **Làm mới** để ứng dụng tìm và kết nối máy in đã ghép nối.
+5. Khi hiện trạng thái **"ĐÃ KẾT NỐI"**, máy in sẵn sàng sử dụng.
+
+### Máy in được hỗ trợ
+
+- Các dòng máy in nhiệt Bluetooth hỗ trợ giao thức ESC/POS (58mm, 80mm).
+- Ví dụ: Xprinter, GOOJPRT, MTP-II, v.v.
+
+### Quyền truy cập cần thiết
+
+| Quyền | Mục đích |
+|--------|----------|
+| Camera | Quét mã vạch sản phẩm |
+| Bluetooth | Kết nối máy in nhiệt |
+| Vị trí | Tìm thiết bị Bluetooth gần đây (yêu cầu của Android) |
+
+## Cấu hình cửa hàng
+
+Truy cập **Cài đặt** > **Thông tin cửa hàng** để thiết lập:
+
+- **Tên cửa hàng**: Hiển thị trên đầu hóa đơn
+- **Địa chỉ**: Dòng 1 và dòng 2 (tùy chọn)
+- **Số điện thoại**: Hiển thị trên hóa đơn
+- **Mã thanh toán (UPI/QR)**: Tạo mã QR thanh toán trên màn hình checkout
+- **Chân trang hóa đơn**: Lời nhắn cuối hóa đơn (VD: "Cảm ơn quý khách!")
+
+## Quản lý sản phẩm
+
+### Thêm sản phẩm mới
+
+1. Vào **Cài đặt** > **Sản phẩm** > nhấn nút **+**.
+2. Quét mã vạch bằng camera hoặc nhập thủ công.
+3. Điền tên sản phẩm và giá.
+4. Nhấn **Thêm sản phẩm**.
+
+### Sửa / Xóa sản phẩm
+
+- Nhấn biểu tượng **bút chì** để sửa sản phẩm.
+- Nhấn biểu tượng **thùng rác** để xóa sản phẩm.
+
+## Quy trình thanh toán
+
+1. Mở ứng dụng → Camera tự động quét mã vạch.
+2. Sản phẩm được thêm vào giỏ hàng tự động.
+3. Điều chỉnh số lượng bằng nút **+/-**.
+4. Nhấn **Xem đơn hàng** để vào trang thanh toán.
+5. Nhấn **In hóa đơn** để in qua máy in Bluetooth.
+
+## Hướng dẫn đóng góp
+
+1. **Tuân thủ Clean Architecture**: Duy trì ranh giới rõ ràng giữa các lớp `domain`, `data` và `presentation`.
+2. **Trạng thái bất biến**: Chỉ emit trạng thái bất biến từ BLoC sử dụng `equatable`.
+3. **Không dùng Exception trực tiếp trong Domain**: Sử dụng pattern `Either<Failure, Type>` của `fpdart` để xử lý lỗi.
