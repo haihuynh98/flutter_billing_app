@@ -1,16 +1,16 @@
-# POS Ban hang Flutter
+# POS Bán hàng Flutter
 
-Ung dung POS/billing offline duoc xay dung bang Flutter, phuc vu quy trinh ban hang tai cua hang nho va vua. App ho tro quet ma vach bang camera, quan ly san pham, luu du lieu offline bang Hive va in hoa don qua may in nhiet Bluetooth.
+Ứng dụng POS/billing offline được xây dựng bằng Flutter, phục vụ quy trình bán hàng tại cửa hàng nhỏ và vừa. App hỗ trợ quét mã vạch bằng camera, quản lý sản phẩm, lưu dữ liệu offline bằng Hive và in hóa đơn qua máy in nhiệt Bluetooth.
 
-## Tinh nang chinh
+## Tính năng chính
 
-- Quan ly san pham: them, sua, xoa, tim kiem theo ten hoac ma vach.
-- Quet ma vach bang camera de dua san pham vao gio hang nhanh.
-- Thanh toan va in hoa don truc tiep tu thiet bi di dong.
-- Cau hinh thong tin cua hang de hien thi tren hoa don.
-- Luu tru du lieu offline, khong phu thuoc Internet de van hanh co ban.
+- Quản lý sản phẩm: thêm, sửa, xóa, tìm kiếm theo tên hoặc mã vạch.
+- Quét mã vạch bằng camera để đưa sản phẩm vào giỏ hàng nhanh.
+- Thanh toán và in hóa đơn trực tiếp từ thiết bị di động.
+- Cấu hình thông tin cửa hàng để hiển thị trên hóa đơn.
+- Lưu trữ dữ liệu offline, không phụ thuộc Internet để vận hành cơ bản.
 
-## Cong nghe su dung
+## Công nghệ sử dụng
 
 - Flutter
 - flutter_bloc
@@ -22,74 +22,74 @@ Ung dung POS/billing offline duoc xay dung bang Flutter, phuc vu quy trinh ban h
 - print_bluetooth_thermal
 - pretty_qr_code
 
-## Cau truc thu muc
+## Cấu trúc thư mục
 
 ```text
 lib/
 ├── core/
-│   ├── data/                # Khoi tao Hive, du lieu dung chung
+│   ├── data/                # Khởi tạo Hive, dữ liệu dùng chung
 │   ├── error/               # Failure / error model
-│   ├── theme/               # Theme giao dien
+│   ├── theme/               # Theme giao diện
 │   ├── usecase/             # Base usecase
 │   ├── utils/               # Helper, printer helper, validator...
-│   ├── widgets/             # Widget dung chung
-│   └── service_locator.dart # Dang ky dependency voi get_it
+│   ├── widgets/             # Widget dùng chung
+│   └── service_locator.dart # Đăng ký dependency với get_it
 └── features/
-    ├── billing/             # Quet ma, gio hang, thanh toan, in hoa don
-    ├── product/             # Quan ly san pham
-    ├── settings/            # Ket noi may in, cai dat
-    └── shop/                # Thong tin cua hang
+    ├── billing/             # Quét mã, giỏ hàng, thanh toán, in hóa đơn
+    ├── product/             # Quản lý sản phẩm
+    ├── settings/            # Kết nối máy in, cài đặt
+    └── shop/                # Thông tin cửa hàng
 ```
 
-Moi feature duoc chia theo cac lop `data`, `domain`, `presentation`.
+Mỗi feature được chia theo các lớp `data`, `domain`, `presentation`.
 
-## Yeu cau moi truong
+## Yêu cầu môi trường
 
 - Flutter SDK `>=3.1.0`
-- Dart di kem Flutter
-- Android Studio hoac VS Code + Flutter extension
-- Neu build iOS: can macOS + Xcode
-- Neu test in thuc te: can dien thoai that va may in nhiet Bluetooth
+- Dart đi kèm Flutter
+- Android Studio hoặc VS Code + Flutter extension
+- Nếu build iOS: cần macOS + Xcode
+- Nếu test in thực tế: cần điện thoại thật và máy in nhiệt Bluetooth
 
-## Cai dat va chay du an
+## Cài đặt và chạy dự án
 
-### 1. Lay source code
+### 1. Lấy source code
 
 ```bash
 git clone <repository_url>
 cd billing_app
 ```
 
-### 2. Cai dependency
+### 2. Cài dependency
 
 ```bash
 flutter pub get
 ```
 
-### 3. Chay code generation
+### 3. Chạy code generation
 
-Du an dung Hive generator va JSON serialization, vi vay can chay:
+Dự án dùng Hive generator và JSON serialization, vì vậy cần chạy:
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-Neu ban thay doi model / adapter va can tao lai file sinh tu dong, hay chay lai lenh nay.
+Nếu bạn thay đổi model / adapter và cần tạo lại file sinh tự động, hãy chạy lại lệnh này.
 
-### 4. Chay app
+### 4. Chạy app
 
 ```bash
 flutter run
 ```
 
-Neu muon chay tren thiet bi cu the:
+Nếu muốn chạy trên thiết bị cụ thể:
 
 ```bash
 flutter devices
 flutter run -d <device_id>
 ```
 
-## Build ban phat hanh
+## Build bản phát hành
 
 ### Android APK
 
@@ -121,119 +121,121 @@ build/app/outputs/bundle/release/app-release.aab
 flutter build ios --release
 ```
 
-Luu y: build iOS can thuc hien tren macOS co cai Xcode.
+Lưu ý: build iOS cần thực hiện trên macOS có cài Xcode.
 
-## Huong dan cau hinh app sau khi cai dat
+## Hướng dẫn cấu hình app sau khi cài đặt
 
-### 1. Cau hinh thong tin cua hang
+### 1. Cấu hình thông tin cửa hàng
 
-Vao:
+Vào:
 
-`Cai dat` -> `Thong tin cua hang`
+`Cài đặt` -> `Thông tin cửa hàng`
 
-Nhap cac truong:
+Nhập các trường:
 
-- Ten cua hang
-- Dia chi dong 1
-- Dia chi dong 2 (khong bat buoc)
-- So dien thoai
-- Ma UPI (khong bat buoc)
-- Noi dung chan hoa don
+- Tên cửa hàng
+- Địa chỉ dòng 1
+- Địa chỉ dòng 2 (không bắt buộc)
+- Số điện thoại
+- Mã UPI (không bắt buộc)
+- Nội dung chân hóa đơn
 
-Sau do bam `Luu thong tin`.
+Sau đó bấm `Lưu thông tin`.
 
-### 2. Cau hinh QR thanh toan
+### 2. Cấu hình QR thanh toán
 
-App hien tai tao QR thanh toan theo dinh dang UPI va gia tri tien te `INR`.
+App hiện tại tạo QR thanh toán theo định dạng UPI và giá trị tiền tệ `INR`.
 
-- Neu truong `Ma UPI` de trong, khu vuc QR thanh toan se khong hien thi.
-- Neu ban can chuyen sang he thong QR ngan hang/VietQR, can sua phan logic sinh QR trong man hinh thanh toan.
+- Nếu trường `Mã UPI` để trống, khu vực QR thanh toán sẽ không hiển thị.
+- Nếu bạn cần chuyển sang hệ thống QR ngân hàng/VietQR, cần sửa phần logic sinh QR trong màn hình thanh toán.
 
-### 3. Ket noi may in Bluetooth
+### 3. Kết nối máy in Bluetooth
 
-Vao:
+Vào:
 
-`Cai dat` -> `Thiet bi in`
+`Cài đặt` -> `Thiết bị in`
 
-Thuc hien theo thu tu:
+Thực hiện theo thứ tự:
 
-1. Bat Bluetooth tren dien thoai.
-2. Ghep doi may in trong phan cai dat Bluetooth cua he dieu hanh.
-3. Quay lai app.
-4. Nhan nut lam moi trong man hinh `Thiet bi in`.
-5. App se quet danh sach thiet bi da ghep doi va thu ket noi.
+1. Bật Bluetooth trên điện thoại.
+2. Ghép đôi máy in trong phần cài đặt Bluetooth của hệ điều hành.
+3. Quay lại app.
+4. Nhấn nút làm mới trong màn hình `Thiết bị in`.
+5. App sẽ quét danh sách thiết bị đã ghép đôi và thử kết nối.
 
-Neu ket noi thanh cong, app se luu:
+Nếu kết nối thành công, app sẽ lưu:
 
 - `printer_mac`
 - `printer_name`
 
-vao Hive de tu dong su dung lai cho lan sau.
+vào Hive để tự động sử dụng lại cho lần sau.
 
-## Quyen truy cap can cap
+## Quyền truy cập cần cấp
 
-App co the yeu cau cac quyen sau:
+App có thể yêu cầu các quyền sau:
 
-- Camera: de quet ma vach
-- Bluetooth: de ket noi may in nhiet
-- Vi tri: can cho mot so thiet bi Android khi quet thiet bi Bluetooth
+- Camera: để quét mã vạch
+- Bluetooth: để kết nối máy in nhiệt
+- Vị trí: cần cho một số thiết bị Android khi quét thiết bị Bluetooth
 
-Neu app khong tim thay may in, hay kiem tra lai:
+Nếu app không tìm thấy máy in, hãy kiểm tra lại:
 
-- Bluetooth da bat chua
-- May in da ghep doi trong he dieu hanh chua
-- Quyen Bluetooth / vi tri da duoc cap chua
+- Bluetooth đã bật chưa
+- Máy in đã ghép đôi trong hệ điều hành chưa
+- Quyền Bluetooth / vị trí đã được cấp chưa
 
-## Luu tru du lieu
+## Lưu trữ dữ liệu
 
-App su dung Hive de luu du lieu local tren thiet bi:
+App sử dụng Hive để lưu dữ liệu local trên thiết bị:
 
-- Danh sach san pham
-- Thong tin cua hang
-- Cau hinh may in
+- Danh sách sản phẩm
+- Thông tin cửa hàng
+- Cấu hình máy in
 
-Dieu nay giup app hoat dong offline trong nhieu truong hop co ket noi mang kem on dinh.
+Điều này giúp app hoạt động offline trong nhiều trường hợp có kết nối mạng kém ổn định.
 
-## Kiem tra chat luong ma nguon
+## Kiểm tra chất lượng mã nguồn
 
-### Phan tich loi / warning
+### Phân tích lỗi / warning
 
 ```bash
 flutter analyze
 ```
 
-### Chay test
+### Chạy test
 
 ```bash
 flutter test
 ```
 
-## Luu y khi in tieng Viet
+## Lưu ý khi in tiếng Việt
 
-Giao dien app da duoc Viet hoa, tuy nhien viec in dau tieng Viet tren may in nhiet phu thuoc vao:
+Giao diện app đã được Việt hóa, tuy nhiên việc in dấu tiếng Việt trên máy in nhiệt phụ thuộc vào:
 
-- model may in
-- bang ma ky tu ma may in ho tro
-- cach xu ly encoding cua firmware may in
+- model máy in
+- bảng mã ký tự mà máy in hỗ trợ
+- cách xử lý encoding của firmware máy in
 
-Trong implementation hien tai, helper in dang gui raw bytes don gian. Vi vay mot so may in co the khong hien thi dung cac ky tu co dau. Neu ban can hoa don tieng Viet day du co dau, nen:
+Trong implementation hiện tại, helper in đang gửi raw bytes đơn giản. Vì vậy một số máy in có thể không hiển thị đúng các ký tự có dấu. Trong mã nguồn hiện tại, dữ liệu trước khi in đã được chuẩn hóa về dạng không dấu để tăng khả năng tương thích với nhiều máy in nhiệt Bluetooth.
 
-- dung may in ho tro Unicode / UTF-8 hoac bang ma phu hop
-- hoac nang cap lop in de map bang ma ESC/POS tuong ung voi model may in
+Nếu bạn cần hóa đơn tiếng Việt đầy đủ có dấu, nên:
 
-## Quy trinh su dung nhanh
+- dùng máy in hỗ trợ Unicode / UTF-8 hoặc bảng mã phù hợp
+- hoặc nâng cấp lớp in để map bảng mã ESC/POS tương ứng với model máy in
 
-1. Vao `Cai dat` de cap nhat thong tin cua hang.
-2. Ket noi may in Bluetooth.
-3. Vao `San pham` de them danh muc.
-4. Quay lai man hinh chinh de quet ma vach.
-5. Bam `Xem don hang` -> `In hoa don`.
+## Quy trình sử dụng nhanh
 
-## Gop y phat trien
+1. Vào `Cài đặt` để cập nhật thông tin cửa hàng.
+2. Kết nối máy in Bluetooth.
+3. Vào `Sản phẩm` để thêm danh mục.
+4. Quay lại màn hình chính để quét mã vạch.
+5. Bấm `Xem đơn hàng` -> `In hóa đơn`.
 
-Khi mo rong du an, nen giu dung cau truc hien tai:
+## Góp ý phát triển
 
-- `domain` khong phu thuoc truc tiep vao UI
-- `data` xu ly repository / datasource
-- `presentation` xu ly bloc va man hinh
-- State nen bat bien va su dung `equatable`
+Khi mở rộng dự án, nên giữ đúng cấu trúc hiện tại:
+
+- `domain` không phụ thuộc trực tiếp vào UI
+- `data` xử lý repository / datasource
+- `presentation` xử lý bloc và màn hình
+- State nên bất biến và sử dụng `equatable`

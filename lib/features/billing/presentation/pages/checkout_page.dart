@@ -28,7 +28,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         },
         child: Scaffold(
           appBar: AppBar(
-            title: const Text('Thanh toan',
+            title: const Text('Thanh toán',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
             centerTitle: true,
             backgroundColor: Colors.transparent,
@@ -46,7 +46,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
             listener: (context, state) {
               if (state.printSuccess) {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text('In hoa don thanh cong'),
+                    content: Text('In hóa đơn thành công'),
                     backgroundColor: Colors.green));
                 // context.read<BillingBloc>().add(ClearCartEvent());
                 // context.go('/');
@@ -56,7 +56,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
               return BlocBuilder<ShopBloc, ShopState>(
                   builder: (context, shopState) {
                 String upiId = '';
-                String shopName = 'Cua hang';
+                String shopName = 'Cửa hàng';
 
                 if (shopState is ShopLoaded) {
                   upiId = shopState.shop.upiId;
@@ -114,11 +114,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                       ),
                                       children: [
                                         _buildHeaderCell(
-                                            'Ten san pham', TextAlign.left),
+                                            'Tên sản phẩm', TextAlign.left),
                                         _buildHeaderCell(
-                                            'Don gia', TextAlign.right),
+                                            'Đơn giá', TextAlign.right),
                                         _buildHeaderCell(
-                                            'Thanh tien', TextAlign.right),
+                                            'Thành tiền', TextAlign.right),
                                       ],
                                     ),
                                     // Items rows
@@ -184,7 +184,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                     ? Column(
                                         children: [
                                           const Text(
-                                            'Quet de thanh toan',
+                                            'Quét để thanh toán',
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
@@ -209,7 +209,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      'TONG CONG',
+                                      'TỔNG CỘNG',
                                       style: TextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
@@ -245,11 +245,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                         content:
-                                            Text('Chua tai duoc thong tin cua hang'),
+                                            Text('Chưa tải được thông tin cửa hàng'),
                                         backgroundColor: Colors.red));
                               }
                             },
-                            label: 'In hoa don',
+                            label: 'In hóa đơn',
                             icon: Icons.print,
                             isLoading: billingState.isPrinting,
                           ),

@@ -11,7 +11,7 @@ class PrinterRepositoryImpl implements PrinterRepository {
     if (await _printerHelper.checkPermission()) {
       return await _printerHelper.getBondedDevices();
     }
-    throw Exception('Quyen Bluetooth bi tu choi');
+    throw Exception('Quyền Bluetooth bị từ chối');
   }
 
   @override

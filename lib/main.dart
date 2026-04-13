@@ -35,7 +35,7 @@ class MyApp extends StatelessWidget {
             create: (context) => di.sl<PrinterBloc>()..add(InitPrinterEvent())),
       ],
       child: MaterialApp.router(
-        title: 'POS Ban hang',
+        title: 'POS Bán hàng',
         theme: AppTheme.lightTheme,
         routerConfig: router,
         debugShowCheckedModeBanner: false,

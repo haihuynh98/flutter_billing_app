@@ -26,8 +26,8 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       ScanBarcodeEvent event, Emitter<BillingState> emit) async {
     final result = await getProductByBarcodeUseCase(event.barcode);
     result.fold(
-      (failure) =>
-          emit(state.copyWith(error: 'Khong tim thay san pham: ${event.barcode}')),
+      (failure) => emit(
+          state.copyWith(error: 'Không tìm thấy sản phẩm: ${event.barcode}')),
       (product) {
         add(AddProductToCartEvent(product));
       },
@@ -92,13 +92,14 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
         final connected = await printerHelper.connect(savedMac);
         if (!connected) {
           emit(state.copyWith(
-              error: 'Khong the tu dong ket noi may in!', clearError: false));
+              error: 'Không thể tự động kết nối máy in!', clearError: false));
           emit(state.copyWith(clearError: true));
           return;
         }
       } else {
         emit(state.copyWith(
-            error: 'May in chua duoc ket noi va khong tim thay may in da luu!',
+            error:
+                'Máy in chưa được kết nối và không tìm thấy máy in đã lưu!',
             clearError: false));
         emit(state.copyWith(clearError: true));
         return;
@@ -130,7 +131,7 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       emit(state.copyWith(isPrinting: false, printSuccess: true));
     } catch (e) {
       emit(state.copyWith(
-          isPrinting: false, error: 'In hoa don that bai: $e', clearError: false));
+          isPrinting: false, error: 'In hóa đơn thất bại: $e', clearError: false));
       // Reset error instantly avoids sticky error
       emit(state.copyWith(clearError: true));
     }

@@ -18,12 +18,12 @@ class ShopRepositoryImpl implements ShopRepository {
       } else {
         // Return default shop if not found
         return const Right(Shop(
-            name: 'Cua hang mau',
-            addressLine1: '123 Nguyen Trai',
-            addressLine2: 'Quan 1, TP. HCM',
+            name: 'Cửa hàng mẫu',
+            addressLine1: '123 Nguyễn Trãi',
+            addressLine2: 'Quận 1, TP. HCM',
             phoneNumber: '0901234567',
             upiId: '',
-            footerText: 'Cam on quy khach, hen gap lai!'));
+            footerText: 'Cảm ơn quý khách, hẹn gặp lại!'));
       }
     } catch (e) {
       return Left(CacheFailure(e.toString()));

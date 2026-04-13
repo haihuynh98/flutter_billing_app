@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>POS Ban hang</string>
+	<string>POS Bán hàng</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -46,12 +46,12 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Ung dung can quyen truy cap camera de quet ma vach.</string>
+	<string>Ứng dụng cần quyền truy cập camera để quét mã vạch.</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>Ung dung can Bluetooth de ket noi voi may in nhiet.</string>
+	<string>Ứng dụng cần Bluetooth để kết nối với máy in nhiệt.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>Ung dung can Bluetooth de ket noi voi may in nhiet.</string>
+	<string>Ứng dụng cần Bluetooth để kết nối với máy in nhiệt.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Ung dung can quyen vi tri de tim may in Bluetooth o gan.</string>
+	<string>Ứng dụng cần quyền vị trí để tìm máy in Bluetooth ở gần.</string>
 </dict>
 </plist>

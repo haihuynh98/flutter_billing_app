@@ -116,7 +116,7 @@ class _HomePageState extends State<HomePage> {
                   if (_isCameraOn && mounted) _scannerController.start();
                 },
           icon: Icons.payment,
-          label: 'Xem don hang',
+          label: 'Xem đơn hàng',
         );
       }),
     );
@@ -222,7 +222,7 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 16),
           const Text(
-            'Camera dang tat',
+            'Camera đang tắt',
             style: TextStyle(
                 color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
           ),
@@ -230,7 +230,7 @@ class _HomePageState extends State<HomePage> {
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 32),
             child: Text(
-              'Bat camera de bat dau quet ma vach va them san pham tu dong.',
+              'Bật camera để bắt đầu quét mã vạch và thêm sản phẩm tự động.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white70, fontSize: 12),
             ),
@@ -245,7 +245,7 @@ class _HomePageState extends State<HomePage> {
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
             icon: const Icon(Icons.videocam),
-            label: const Text('Bat camera',
+            label: const Text('Bật camera',
                 style: TextStyle(fontWeight: FontWeight.bold)),
             onPressed: () {
               setState(() => _isCameraOn = true);
@@ -342,10 +342,10 @@ class _HomePageState extends State<HomePage> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('San pham da quet',
+                        const Text('Sản phẩm đã quét',
                             style: TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.w600)),
-                        Text('Tong $totalItems san pham',
+                        Text('Tổng $totalItems sản phẩm',
                             style: const TextStyle(
                                 fontSize: 12, color: Colors.grey)),
                       ],
@@ -353,7 +353,7 @@ class _HomePageState extends State<HomePage> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text('TONG TIEN',
+                        const Text('TỔNG TIỀN',
                             style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
@@ -421,13 +421,13 @@ class _HomePageState extends State<HomePage> {
                 Icon(Icons.shopping_basket, size: 40, color: Colors.grey[300]),
           ),
           const SizedBox(height: 16),
-          const Text('Danh sach trong',
+          const Text('Danh sách trống',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           const SizedBox(height: 8),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 40),
             child: Text(
-              'Cac san pham da quet se hien thi o day khi ban dung camera phia tren de quet.',
+              'Các sản phẩm đã quét sẽ hiển thị ở đây khi bạn dùng camera phía trên để quét.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey, fontSize: 14),
             ),
