@@ -33,7 +33,7 @@ class PrinterBloc extends Bloc<PrinterEvent, PrinterState> {
       if (devices.isEmpty) {
         emit(state.copyWith(
           status: PrinterStatus.scanFailure,
-          errorMessage: 'No paired devices found.',
+          errorMessage: 'Khong tim thay thiet bi da ghep doi.',
           devices: [],
         ));
         return;
@@ -59,7 +59,7 @@ class PrinterBloc extends Bloc<PrinterEvent, PrinterState> {
       if (!connected) {
         emit(state.copyWith(
           status: PrinterStatus.scanFailure,
-          errorMessage: 'Could not connect to any paired device.',
+          errorMessage: 'Khong the ket noi voi thiet bi da ghep doi nao.',
           devices: devices,
         ));
       }
@@ -102,7 +102,7 @@ class PrinterBloc extends Bloc<PrinterEvent, PrinterState> {
     } else {
       emit(state.copyWith(
         status: PrinterStatus.connectionFailure,
-        errorMessage: 'Failed to connect to printer',
+        errorMessage: 'Ket noi may in that bai',
       ));
     }
   }

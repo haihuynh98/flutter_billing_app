@@ -79,7 +79,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text('Shop Details'),
+          title: const Text('Thong tin cua hang'),
         ),
         body: BlocConsumer<ShopBloc, ShopState>(
           listener: (context, state) {
@@ -87,7 +87,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
               _updateControllers(state.shop);
             } else if (state is ShopOperationSuccess) {
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('Shop details saved!'),
+                  content: Text('Da luu thong tin cua hang!'),
                   backgroundColor: Colors.green));
               context.pop();
             } else if (state is ShopError) {
@@ -109,7 +109,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text('General Information',
+                    Text('Thong tin chung',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -120,36 +120,36 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                       height: 5,
                     ),
                     Text(
-                      'These details will appear on your digital and printed receipts.',
+                      'Cac thong tin nay se hien thi tren hoa don dien tu va hoa don in.',
                       style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                     ),
                     const SizedBox(height: 24),
-                    const InputLabel(text: 'Shop Name'),
+                    const InputLabel(text: 'Ten cua hang'),
                     _buildTextField(
                       controller: _nameController,
-                      hint: 'e.g. QuickMart Superstore',
-                      validator: AppValidators.required('Required'),
+                      hint: 'vi du: Tap hoa Thanh Dat',
+                      validator: AppValidators.required('Bat buoc'),
                     ),
                     const SizedBox(height: 15),
-                    const InputLabel(text: 'Address Line 1'),
+                    const InputLabel(text: 'Dia chi dong 1'),
                     _buildTextField(
                       controller: _address1Controller,
                       hint: 'Samrajpet, Mecheri',
-                      validator: AppValidators.required('Required'),
+                      validator: AppValidators.required('Bat buoc'),
                     ),
                     const SizedBox(height: 15),
-                    const InputLabel(text: 'Address Line 2 (Optional)'),
+                    const InputLabel(text: 'Dia chi dong 2 (Tuy chon)'),
                     _buildTextField(
                       controller: _address2Controller,
                       hint: 'Salem - 636453',
                     ),
                     const SizedBox(height: 15),
-                    const InputLabel(text: 'Phone Number'),
+                    const InputLabel(text: 'So dien thoai'),
                     _buildTextField(
                       controller: _phoneController,
                       hint: '+91 7010674588',
                       keyboardType: TextInputType.phone,
-                      validator: AppValidators.required('Required'),
+                      validator: AppValidators.required('Bat buoc'),
                     ),
                     const SizedBox(height: 15),
                     const InputLabel(text: 'UPI ID'),
@@ -161,15 +161,15 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const InputLabel(text: 'Receipt Footer Text'),
-                        Text('Max 150 chars',
+                        const InputLabel(text: 'Noi dung chan hoa don'),
+                        Text('Toi da 150 ky tu',
                             style: TextStyle(
                                 fontSize: 11, color: Colors.grey[400])),
                       ],
                     ),
                     _buildTextField(
                       controller: _footerController,
-                      hint: 'Thank you, Visit again!!!',
+                      hint: 'Cam on quy khach, hen gap lai!',
                       maxLines: 2,
                       maxLength: 60,
                     ),
@@ -182,7 +182,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
         bottomNavigationBar: PrimaryButton(
           onPressed: _saveShop,
           icon: Icons.save,
-          label: 'Save Details',
+          label: 'Luu thong tin',
         ));
   }
 

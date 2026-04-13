@@ -46,8 +46,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
           status: ProductStatus.error, message: failure.message)),
       (_) {
         emit(state.copyWith(
-            status: ProductStatus.success,
-            message: 'Product added successfully'));
+            status: ProductStatus.success, message: 'Da them san pham thanh cong'));
         add(LoadProducts());
       },
     );
@@ -63,7 +62,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       (_) {
         emit(state.copyWith(
             status: ProductStatus.success,
-            message: 'Product updated successfully'));
+            message: 'Da cap nhat san pham thanh cong'));
         add(LoadProducts());
       },
     );
@@ -78,8 +77,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
           status: ProductStatus.error, message: failure.message)),
       (_) {
         emit(state.copyWith(
-            status: ProductStatus.success,
-            message: 'Product deleted successfully'));
+            status: ProductStatus.success, message: 'Da xoa san pham thanh cong'));
         add(LoadProducts());
       },
     );
