@@ -28,7 +28,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cai dat',
+        title: const Text('Cài đặt',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
@@ -49,7 +49,7 @@ class _SettingsPageState extends State<SettingsPage> {
               padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
               child: BlocBuilder<ShopBloc, ShopState>(
                 builder: (context, state) {
-                  String shopName = 'Cua hang mau';
+                  String shopName = 'Cửa hàng mẫu';
                   String initials = 'EG';
                   if (state is ShopLoaded && state.shop.name.isNotEmpty) {
                     shopName = state.shop.name;
@@ -98,20 +98,20 @@ class _SettingsPageState extends State<SettingsPage> {
             const SizedBox(height: 24),
 
             // Management Section
-            _buildSectionHeader('Quan ly'),
+            _buildSectionHeader('Quản lý'),
             _buildListGroup(
               children: [
                 _buildListItem(
                   icon: Icons.qr_code_scanner,
-                  title: 'San pham',
-                  subtitle: 'Quan ly ton kho va ma vach',
+                  title: 'Sản phẩm',
+                  subtitle: 'Quản lý tồn kho và mã vạch',
                   onTap: () => context.push('/products'),
                 ),
                 _buildDivider(),
                 _buildListItem(
                   icon: Icons.storefront,
-                  title: 'Thong tin cua hang',
-                  subtitle: 'Sua thong tin kinh doanh va dia chi',
+                  title: 'Thông tin cửa hàng',
+                  subtitle: 'Sửa thông tin kinh doanh và địa chỉ',
                   onTap: () => context.push('/shop'),
                 ),
               ],
@@ -120,7 +120,7 @@ class _SettingsPageState extends State<SettingsPage> {
             const SizedBox(height: 24),
 
             // Hardware Section
-            _buildSectionHeader('Thiet bi'),
+            _buildSectionHeader('Thiết bị'),
             BlocConsumer<PrinterBloc, PrinterState>(
               listener: (context, state) {
                 if (state.errorMessage != null) {
@@ -129,7 +129,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       backgroundColor: Colors.red));
                 } else if (state.status == PrinterStatus.connected) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text('Da ket noi may in'),
+                      content: Text('Đã kết nối máy in'),
                       backgroundColor: Colors.green));
                 }
               },
@@ -138,13 +138,13 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     _buildListItem(
                       icon: Icons.print,
-                      title: 'May in',
+                      title: 'Máy in',
                       subtitleWidget: Row(
                         children: [
                           Text(
                             state.connectedMac != null
-                                ? (state.connectedName ?? 'Da ket noi may in')
-                                : 'Chua ket noi may in',
+                                ? (state.connectedName ?? 'Đã kết nối máy in')
+                                : 'Chưa kết nối máy in',
                             style: TextStyle(
                                 fontSize: 12, color: Colors.grey[500]),
                           ),
@@ -158,7 +158,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(color: Colors.teal[200]!)),
                               child: Text(
-                                'DA KET NOI',
+                                'ĐÃ KẾT NỐI',
                                 style: TextStyle(
                                     fontSize: 9,
                                     fontWeight: FontWeight.bold,
@@ -205,7 +205,7 @@ class _SettingsPageState extends State<SettingsPage> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               child: Text(
-                'De ket noi thiet bi moi, bam bieu tuong cai dat de ghep doi trong Bluetooth cua dien thoai, sau do quay lai va bam Lam moi.',
+                'Để kết nối thiết bị mới, bấm biểu tượng cài đặt để ghép đôi trong Bluetooth của điện thoại, sau đó quay lại và bấm Làm mới.',
                 style: TextStyle(
                     fontSize: 11,
                     fontStyle: FontStyle.italic,

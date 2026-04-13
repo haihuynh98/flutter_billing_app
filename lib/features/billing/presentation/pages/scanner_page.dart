@@ -53,7 +53,7 @@ class _ScannerPageState extends State<ScannerPage> {
                 size: 28, color: Theme.of(context).primaryColor),
             onPressed: () => context.pop(),
           ),
-          title: const Text('Quet ma vach',
+          title: const Text('Quét mã vạch',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
       body: Stack(
         children: [
@@ -105,7 +105,7 @@ class _ScannerPageState extends State<ScannerPage> {
             left: 0,
             right: 0,
             child: Text(
-              'Canh ma vach vao trong khung',
+              'Canh mã vạch vào trong khung',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white, fontSize: 16),
             ),

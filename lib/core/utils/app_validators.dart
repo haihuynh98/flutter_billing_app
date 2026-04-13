@@ -10,13 +10,13 @@ class AppValidators {
 
   static String? price(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Vui long nhap gia';
+      return 'Vui lòng nhập giá';
     }
     if (double.tryParse(value) == null) {
-      return 'Vui long nhap so hop le';
+      return 'Vui lòng nhập số hợp lệ';
     }
     if (double.parse(value) < 0) {
-      return 'Gia khong duoc am';
+      return 'Giá không được âm';
     }
     return null;
   }

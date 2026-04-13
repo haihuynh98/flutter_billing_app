@@ -1,44 +1,44 @@
-# Billing App - Huong dan tieng Viet
+# Billing App - Hướng dẫn tiếng Việt
 
-Ung dung Flutter ho tro ban hang/tinh tien offline, quet ma vach bang camera va in hoa don qua may in Bluetooth.
+Ứng dụng Flutter hỗ trợ bán hàng/tính tiền offline, quét mã vạch bằng camera và in hóa đơn qua máy in Bluetooth.
 
-## 1) Yeu cau moi truong
+## 1) Yêu cầu môi trường
 
 - Flutter SDK >= 3.1.0
-- Dart SDK di kem Flutter
-- Android Studio (khuyen nghi cho Android)
-- Xcode (neu build iOS/macOS)
-- Thiet bi Android that (khuyen nghi de test Bluetooth/may in)
+- Dart SDK đi kèm Flutter
+- Android Studio (khuyến nghị cho Android)
+- Xcode (nếu build iOS/macOS)
+- Thiết bị Android thật (khuyến nghị để test Bluetooth/máy in)
 
-Kiem tra moi truong:
+Kiểm tra môi trường:
 
 ```bash
 flutter doctor
 ```
 
-## 2) Cai dat du an
+## 2) Cài đặt dự án
 
 ```bash
 flutter pub get
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-> Lenh `build_runner` can thiet de tao code cho Hive adapter va JSON serialization.
+> Lệnh `build_runner` cần thiết để tạo code cho Hive adapter và JSON serialization.
 
-## 3) Chay ung dung
+## 3) Chạy ứng dụng
 
 ```bash
 flutter run
 ```
 
-Neu muon chay tren thiet bi cu the:
+Nếu muốn chạy trên thiết bị cụ thể:
 
 ```bash
 flutter devices
 flutter run -d <device_id>
 ```
 
-## 4) Build ban phat hanh
+## 4) Build bản phát hành
 
 ### Android APK
 
@@ -46,7 +46,7 @@ flutter run -d <device_id>
 flutter build apk --release
 ```
 
-File ket qua:
+File kết quả:
 
 `build/app/outputs/flutter-apk/app-release.apk`
 
@@ -56,100 +56,100 @@ File ket qua:
 flutter build appbundle --release
 ```
 
-File ket qua:
+File kết quả:
 
 `build/app/outputs/bundle/release/app-release.aab`
 
-### iOS (neu cau hinh du chung chi)
+### iOS (nếu cấu hình đủ chứng chỉ)
 
 ```bash
 flutter build ios --release
 ```
 
-## 5) Cau hinh va su dung trong app
+## 5) Cấu hình và sử dụng trong app
 
-### 5.1 Quan ly san pham
+### 5.1 Quản lý sản phẩm
 
-1. Vao **Cai dat** -> **San pham**
-2. Them san pham moi (Ten, Ma vach, Gia)
-3. Co the bam icon quet de lay ma vach tu camera
+1. Vào **Cài đặt** -> **Sản phẩm**
+2. Thêm sản phẩm mới (Tên, Mã vạch, Giá)
+3. Có thể bấm icon quét để lấy mã vạch từ camera
 
-### 5.2 Cau hinh thong tin cua hang
+### 5.2 Cấu hình thông tin cửa hàng
 
-1. Vao **Cai dat** -> **Thong tin cua hang**
-2. Cap nhat:
-   - Ten cua hang
-   - Dia chi dong 1, dong 2
-   - So dien thoai
-   - UPI ID (neu co)
-   - Noi dung chan hoa don
-3. Bam **Luu thong tin**
+1. Vào **Cài đặt** -> **Thông tin cửa hàng**
+2. Cập nhật:
+   - Tên cửa hàng
+   - Địa chỉ dòng 1, dòng 2
+   - Số điện thoại
+   - UPI ID (nếu có)
+   - Nội dung chân hóa đơn
+3. Bấm **Lưu thông tin**
 
-### 5.3 Ket noi may in Bluetooth
+### 5.3 Kết nối máy in Bluetooth
 
-1. Vao **Cai dat** -> **May in**
-2. Bam icon banh rang de mo trang cai dat Bluetooth cua dien thoai
-3. Ghep doi (pair) may in trong he thong
-4. Quay lai app, bam icon **Lam moi** de app quet va ket noi may in
-5. Khi thanh cong, trang thai may in se hien thi **DA KET NOI**
+1. Vào **Cài đặt** -> **Máy in**
+2. Bấm icon bánh răng để mở trang cài đặt Bluetooth của điện thoại
+3. Ghép đôi (pair) máy in trong hệ thống
+4. Quay lại app, bấm icon **Làm mới** để app quét và kết nối máy in
+5. Khi thành công, trạng thái máy in sẽ hiển thị **ĐÃ KẾT NỐI**
 
-> Neu app hoi quyen Bluetooth/Location, can cap quyen day du de quet va ket noi.
+> Nếu app hỏi quyền Bluetooth/Location, cần cấp quyền đầy đủ để quét và kết nối.
 
-### 5.4 Quy trinh tinh tien
+### 5.4 Quy trình tính tiền
 
-1. O man hinh chinh, dua ma vach vao khung quet
-2. San pham se duoc them vao gio
-3. Bam **Xem don hang** -> **In hoa don**
-4. Neu co UPI ID, app hien thi ma QR de thanh toan
+1. Ở màn hình chính, đưa mã vạch vào khung quét
+2. Sản phẩm sẽ được thêm vào giỏ
+3. Bấm **Xem đơn hàng** -> **In hóa đơn**
+4. Nếu có UPI ID, app hiển thị mã QR để thanh toán
 
-## 6) Du lieu luu o dau?
+## 6) Dữ liệu lưu ở đâu?
 
-App dung **Hive** de luu du lieu local (offline), gom:
+App dùng **Hive** để lưu dữ liệu local (offline), gồm:
 
-- Danh sach san pham
-- Thong tin cua hang
-- MAC/ten may in da ket noi
+- Danh sách sản phẩm
+- Thông tin cửa hàng
+- MAC/tên máy in đã kết nối
 
-Nen app van hoat dong khi khong co Internet.
+Nên app vẫn hoạt động khi không có Internet.
 
-## 7) Cau truc ma nguon (rut gon)
+## 7) Cấu trúc mã nguồn (rút gọn)
 
 ```text
 lib/
-  core/         # thanh phan dung chung (theme, db, utils, widget...)
+  core/         # thành phần dùng chung (theme, db, utils, widget...)
   config/       # route
   features/
-    billing/    # quet ma, gio hang, thanh toan, in hoa don
-    product/    # CRUD san pham
-    shop/       # thong tin cua hang
-    settings/   # cai dat va ket noi may in
+    billing/    # quét mã, giỏ hàng, thanh toán, in hóa đơn
+    product/    # CRUD sản phẩm
+    shop/       # thông tin cửa hàng
+    settings/   # cài đặt và kết nối máy in
 ```
 
-## 8) Lenh huu ich
+## 8) Lệnh hữu ích
 
 ```bash
 flutter analyze
 flutter test
 ```
 
-Neu doi model/entity co generated file:
+Nếu đổi model/entity có generated file:
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-## 9) Loi thuong gap
+## 9) Lỗi thường gặp
 
-- **Khong tim thay may in da ghep doi**
-  - Kiem tra da pair may in trong Bluetooth he thong
-  - Cap quyen Bluetooth/Location cho app
-  - Bam Lam moi trong man hinh Cai dat -> May in
+- **Không tìm thấy máy in đã ghép đôi**
+  - Kiểm tra đã pair máy in trong Bluetooth hệ thống
+  - Cấp quyền Bluetooth/Location cho app
+  - Bấm Làm mới trong màn hình Cài đặt -> Máy in
 
-- **Khong quet duoc ma vach**
-  - Kiem tra da cap quyen camera
-  - Canh ma vach vao dung khung quet, du anh sang
+- **Không quét được mã vạch**
+  - Kiểm tra đã cấp quyền camera
+  - Căn mã vạch vào đúng khung quét, đủ ánh sáng
 
-- **In that bai**
-  - Kiem tra may in con pin/giay
-  - Thu ngat ket noi va Lam moi lai
+- **In thất bại**
+  - Kiểm tra máy in còn pin/giấy
+  - Thử ngắt kết nối và Làm mới lại
 

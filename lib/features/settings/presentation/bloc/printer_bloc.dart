@@ -33,7 +33,7 @@ class PrinterBloc extends Bloc<PrinterEvent, PrinterState> {
       if (devices.isEmpty) {
         emit(state.copyWith(
           status: PrinterStatus.scanFailure,
-          errorMessage: 'Khong tim thay thiet bi da ghep doi.',
+          errorMessage: 'Không tìm thấy thiết bị đã ghép đôi.',
           devices: [],
         ));
         return;
@@ -59,7 +59,7 @@ class PrinterBloc extends Bloc<PrinterEvent, PrinterState> {
       if (!connected) {
         emit(state.copyWith(
           status: PrinterStatus.scanFailure,
-          errorMessage: 'Khong the ket noi voi thiet bi da ghep doi nao.',
+          errorMessage: 'Không thể kết nối với thiết bị đã ghép đôi nào.',
           devices: devices,
         ));
       }
@@ -102,7 +102,7 @@ class PrinterBloc extends Bloc<PrinterEvent, PrinterState> {
     } else {
       emit(state.copyWith(
         status: PrinterStatus.connectionFailure,
-        errorMessage: 'Ket noi may in that bai',
+        errorMessage: 'Kết nối máy in thất bại',
       ));
     }
   }

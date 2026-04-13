@@ -43,7 +43,7 @@ class _AddProductPageState extends State<AddProductPage> {
       if (existingProduct != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('San pham voi ma vach "$_barcode" da ton tai!'),
+            content: Text('Sản phẩm với mã vạch "$_barcode" đã tồn tại!'),
             backgroundColor: Colors.red,
           ),
         );
@@ -73,7 +73,7 @@ class _AddProductPageState extends State<AddProductPage> {
                 size: 28, color: Theme.of(context).primaryColor),
             onPressed: () => context.pop(),
           ),
-          title: const Text('Them san pham',
+          title: const Text('Thêm sản phẩm',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           centerTitle: true,
         ),
@@ -85,7 +85,7 @@ class _AddProductPageState extends State<AddProductPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const InputLabel(text: 'Ma vach'),
+                  const InputLabel(text: 'Mã vạch'),
                   Row(
                     children: [
                       Expanded(
@@ -93,10 +93,10 @@ class _AddProductPageState extends State<AddProductPage> {
                           key: ValueKey(_barcode),
                           initialValue: _barcode,
                           decoration: const InputDecoration(
-                            hintText: 'Quet hoac nhap ma vach',
+                            hintText: 'Quét hoặc nhập mã vạch',
                           ),
                           validator:
-                              AppValidators.required('Vui long nhap ma vach'),
+                              AppValidators.required('Vui lòng nhập mã vạch'),
                           onSaved: (value) => _barcode = value!,
                         ),
                       ),
@@ -116,20 +116,20 @@ class _AddProductPageState extends State<AddProductPage> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  const Text('Cham vao bieu tuong de mo camera quet',
+                  const Text('Chạm vào biểu tượng để mở camera quét',
                       style: TextStyle(fontSize: 12, color: Color(0xFF4C669A))),
                   const SizedBox(height: 24),
-                  const InputLabel(text: 'Ten san pham'),
+                  const InputLabel(text: 'Tên sản phẩm'),
                   TextFormField(
                     decoration: const InputDecoration(
-                      hintText: 'Vi du: Gao Thom',
+                      hintText: 'Ví dụ: Gạo thơm',
                     ),
                     textCapitalization: TextCapitalization.words,
-                    validator: AppValidators.required('Vui long nhap ten'),
+                    validator: AppValidators.required('Vui lòng nhập tên'),
                     onSaved: (value) => _name = value!,
                   ),
                   const SizedBox(height: 24),
-                  const InputLabel(text: 'Gia'),
+                  const InputLabel(text: 'Giá'),
                   TextFormField(
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
@@ -152,7 +152,7 @@ class _AddProductPageState extends State<AddProductPage> {
         bottomNavigationBar: PrimaryButton(
           onPressed: _submit,
           icon: Icons.add_circle,
-          label: 'Them san pham',
+          label: 'Thêm sản phẩm',
         ));
   }
 }
