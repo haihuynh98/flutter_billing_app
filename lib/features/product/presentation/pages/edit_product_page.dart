@@ -55,7 +55,7 @@ class _EditProductPageState extends State<EditProductPage> {
                 size: 32, color: Theme.of(context).primaryColor),
             onPressed: () => context.pop(),
           ),
-          title: const Text('Edit Product',
+          title: const Text('Sửa sản phẩm',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           centerTitle: true,
         ),
@@ -85,7 +85,7 @@ class _EditProductPageState extends State<EditProductPage> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('BARCODE',
+                            Text('MÃ VẠCH',
                                 style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
@@ -103,17 +103,17 @@ class _EditProductPageState extends State<EditProductPage> {
                     ),
                   ),
 
-                  const InputLabel(text: 'Product Name'),
+                  const InputLabel(text: 'Tên sản phẩm'),
 
                   TextFormField(
                     initialValue: _name,
                     textCapitalization: TextCapitalization.words,
-                    validator: AppValidators.required('Please enter a name'),
+                    validator: AppValidators.required('Vui lòng nhập tên sản phẩm'),
                     onSaved: (value) => _name = value!,
                   ),
                   const SizedBox(height: 24),
 
-                  const InputLabel(text: 'Price'),
+                  const InputLabel(text: 'Giá bán'),
 
                   TextFormField(
                     initialValue: _price.toStringAsFixed(2),
@@ -137,7 +137,7 @@ class _EditProductPageState extends State<EditProductPage> {
         bottomNavigationBar: PrimaryButton(
           onPressed: _submit,
           icon: Icons.save,
-          label: 'Save Changes',
+          label: 'Lưu thay đổi',
         ));
   }
 }

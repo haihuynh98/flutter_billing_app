@@ -1,101 +1,134 @@
-# 🛒 Mobile POS & Billing App 
+# Ứng dụng bán hàng (POS) - Flutter
 
-A feature-rich, high-performance offline-first billing and Point of Sale (POS) application built with Flutter. Designed for seamless retail checkout operations featuring barcode scanning, thermal Bluetooth printing, and robust local data persistence.
+Ứng dụng POS hoạt động **offline-first** với Flutter, hỗ trợ:
+- Quét mã vạch bằng camera
+- Quản lý sản phẩm (thêm/sửa/xóa)
+- Thanh toán và in hóa đơn qua máy in nhiệt Bluetooth
+- Lưu trữ dữ liệu cục bộ bằng Hive (không cần internet để vận hành cơ bản)
 
-## Screenshot
+## 1) Công nghệ sử dụng
 
+- Flutter (SDK >= 3.1.0)
+- `flutter_bloc` (quản lý state)
+- `go_router` (điều hướng)
+- `get_it` (dependency injection)
+- `hive`, `hive_flutter` (lưu trữ local)
+- `mobile_scanner` (quét mã vạch)
+- `print_bluetooth_thermal` (in Bluetooth)
 
-https://github.com/user-attachments/assets/f2d16454-5408-43b3-b207-cd843bbc2c9e
-
-
-
-## 🎯 Project Scope
-
-This application serves as a complete offline POS system for small to medium-sized retail shops. It streamlines the checkout process, catalog management, and receipt generation securely entirely on-device.
-
-### Core Features:
-- **Product Management System**: Complete CRUD operations for inventory items with barcode/QR code support.
-- **Smart Checkout System**: Rapid cart building via camera-based barcode scanning or manual entry, and robust order calculation functionality.
-- **Bluetooth Thermal Printing**: Direct integration with thermal printers (`print_bluetooth_thermal`) to instantly output physical receipts.
-- **Shop Settings & Customization**: Centrally managed shop details printed dynamically on receipts.
-- **Offline-First Architecture**: Powered by `Hive` for lightning-fast localized NoSQL data storage. No active internet connectivity required.
-
-## 🛠 Tech Stack & Architecture
-
-Built leveraging industry-standard architectural principles (Clean Architecture & Feature-Driven Design) ensuring scalability, separation of concerns, and robust testability. 
-
-- **Framework**: [Flutter](https://flutter.dev/) (SDK >=3.1.0)
-- **State Management**: `flutter_bloc`
-- **Dependency Injection**: `get_it`
-- **Routing**: `go_router`
-- **Local Database**: `hive` & `hive_flutter`
-- **Data Modeling**: `json_serializable`, `equatable`
-- **Functional Programming**: `fpdart`
-- **Hardware Integrations**: `mobile_scanner` (barcodes), `print_bluetooth_thermal`
-
-## 📁 File Structure
-
-The codebase is organized using a **Feature-First Clean Architecture** utilizing domain-driven concepts.
+## 2) Cấu trúc thư mục chính
 
 ```text
 lib/
-├── core/                       # Core application utilities and shared components
-│   ├── data/                   # Global data sources (e.g., Hive initialization)
-│   ├── error/                  # Standardized Failure/Exception models (fpdart compatible)
-│   ├── theme/                  # UI aesthetics, typography, styling
-│   ├── usecase/                # Base UseCase contracts
-│   ├── utils/                  # Helpers (e.g., PrinterHelper, formatters)
-│   ├── widgets/                # Reusable global UI widgets (AppBars, generic buttons)
-│   └── service_locator.dart    # get_it dependency injection setup
-│
-└── features/                   # Independent feature modules
-    ├── billing/                # Core POS operations: Cart, Checkout, Invoice Generation
-    ├── product/                # Inventory management: Adding, Listing, Scanning products
-    ├── settings/               # App configuration: Printer connections, App settings
-    └── shop/                   # Shop details configuration
+├── core/            # Thành phần dùng chung (theme, helper, db, widget...)
+├── config/          # Cấu hình route
+└── features/
+    ├── billing/     # Bán hàng, giỏ hàng, thanh toán, in hóa đơn
+    ├── product/     # Quản lý sản phẩm
+    ├── shop/        # Thông tin cửa hàng
+    └── settings/    # Cài đặt máy in và cấu hình hệ thống
 ```
 
-*Note: Each feature is further subdivided internally into Clean Architecture layers: `data`, `domain`, and `presentation`.*
+## 3) Yêu cầu môi trường
 
-## 💡 Use Cases
+- Flutter SDK 3.1.0 trở lên
+- Android Studio / Xcode (tùy nền tảng build)
+- Thiết bị thật (khuyến nghị) để test:
+  - Camera quét mã vạch
+  - Bluetooth máy in nhiệt
 
-- **Rapid Billing Entry**: A cashier launches the app, navigates to the checkout page, and uses the device camera to instantly scan product barcodes. The products are added to the cart, the total is calculated including taxes, and a receipt is finalized.
-- **Physical Receipt Generation**: After checkout confirmation, the app triggers a connected external Bluetooth thermal POS printer to instantly print an itemized paper receipt with the shop’s header.
-- **Inventory Sideloading**: A manager opens the Product feature to add new stock to the local database, taking a picture of the barcode to bind the SKU for future lightning-fast checkouts.
-- **No-Connection Operation**: The business operates a stall at an exhibition with poor networking. The app functions entirely via its embedded Hive local database and Bluetooth, completely undisturbed by network drops.
+## 4) Cài đặt và chạy dự án
 
-## 🚀 Getting Started
+### Bước 1: Cài dependencies
 
-### Prerequisites
-- Flutter SDK `^3.1.0` or higher
-- Android Studio / Xcode for emulators and building.
-- *Optional*: A physical Android/iOS device and a Bluetooth Thermal Printer for testing hardware integrations natively.
+```bash
+flutter pub get
+```
 
-### Installation
+### Bước 2: Generate code (khi có thay đổi model/adapters)
 
-1. Clone the repository and navigate to the project directory:
-   ```bash
-   git clone <repository_url>
-   cd billing_app
-   ```
+```bash
+dart run build_runner build --delete-conflicting-outputs
+```
 
-2. Fetch dependencies:
-   ```bash
-   flutter pub get
-   ```
+### Bước 3: Chạy app ở chế độ debug
 
-3. Run code generation (required for Hive adapters and JSON serialization):
-   ```bash
-   dart run build_runner build --delete-conflicting-outputs
-   ```
+```bash
+flutter run
+```
 
-4. Run the project:
-   ```bash
-   flutter run
-   ```
+## 5) Build ứng dụng
 
-## 🤝 Contributing Guidelines
-As a senior-focused project, please adhere to:
-1. **Clean Architecture Rules**: Maintain strict boundaries between `domain`, `data`, and `presentation` layers.
-2. **Immutable States**: Emit only immutable states from BLoCs utilizing `equatable`.
-3. **No Direct Exceptions in Domain**: Utilize `fpdart`'s `Either<Failure, Type>` pattern to handle control flow for exceptions.
+### Android (APK release)
+
+```bash
+flutter build apk --release
+```
+
+### Android (App Bundle)
+
+```bash
+flutter build appbundle --release
+```
+
+### iOS (cần macOS + Xcode)
+
+```bash
+flutter build ios --release
+```
+
+### Web
+
+```bash
+flutter build web
+```
+
+## 6) Hướng dẫn cấu hình trong app
+
+### 6.1 Cấu hình thông tin cửa hàng
+
+Vào **Cài đặt -> Thông tin cửa hàng** và nhập:
+- Tên cửa hàng
+- Địa chỉ
+- Số điện thoại
+- Mã thanh toán (UPI nếu bạn dùng)
+- Lời nhắn cuối hóa đơn
+
+Thông tin này sẽ hiển thị trên hóa đơn in ra.
+
+### 6.2 Kết nối máy in Bluetooth
+
+1. Mở **Cài đặt** trong app.  
+2. Nhấn biểu tượng bánh răng để mở phần Bluetooth của điện thoại.  
+3. Ghép đôi máy in nhiệt với điện thoại (pair).  
+4. Quay lại app và nhấn **Làm mới** để app tự kết nối máy in đã ghép đôi.  
+5. Khi thấy trạng thái **ĐÃ KẾT NỐI**, bạn có thể in hóa đơn.
+
+> Lưu ý: App cần quyền Bluetooth và vị trí (tùy phiên bản Android) để quét thiết bị.
+
+## 7) Quy trình sử dụng nhanh
+
+1. Vào **Sản phẩm** để tạo danh mục hàng hóa.
+2. Quét mã ở màn hình chính để thêm hàng vào giỏ.
+3. Nhấn **Xem đơn hàng** để vào màn hình thanh toán.
+4. Nhấn **In hóa đơn** để in qua máy in đã kết nối.
+
+## 8) Dữ liệu local và reset dữ liệu
+
+- Dữ liệu được lưu bằng Hive trên thiết bị.
+- Box chính:
+  - `products`
+  - `shop`
+  - `settings`
+
+Nếu cần reset hoàn toàn dữ liệu, xóa app hoặc xóa local data của app trên thiết bị.
+
+## 9) Một số lỗi thường gặp
+
+- **Không tìm thấy máy in**: kiểm tra đã cấp quyền Bluetooth/vị trí và đã ghép đôi trước trong cài đặt hệ điều hành.
+- **Không quét được mã vạch**: kiểm tra quyền camera và ánh sáng môi trường.
+- **Không in được**: kiểm tra trạng thái kết nối máy in trong màn hình Cài đặt.
+
+---
+
+Nếu bạn muốn mở rộng dự án (đa ngôn ngữ, quản lý khách hàng, đồng bộ cloud), có thể bắt đầu từ các module trong `features/` theo đúng kiến trúc hiện tại.

@@ -143,7 +143,7 @@ class PrinterHelper {
 
     // Date and Time
     String formattedDate =
-        DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now());
+        DateFormat('dd-MM-yyyy HH:mm').format(DateTime.now());
     bytes += _textToBytes(formattedDate);
     bytes += EscPos.lineFeed;
 
@@ -152,7 +152,7 @@ class PrinterHelper {
 
     // Header (Align Left)
     bytes += EscPos.alignLeft;
-    bytes += _textToBytes('Item            Price   Total');
+    bytes += _textToBytes('Mat hang        Gia    Tien');
     bytes += EscPos.lineFeed;
     bytes += _textToBytes('--------------------------------');
     bytes += EscPos.lineFeed;
@@ -178,7 +178,7 @@ class PrinterHelper {
     // Total (Align Right)
     bytes += EscPos.alignRight;
     bytes += EscPos.boldOn;
-    bytes += _textToBytes('TOTAL: $total');
+    bytes += _textToBytes('TONG: $total');
     bytes += EscPos.lineFeed;
     bytes += EscPos.boldOff;
     bytes += EscPos.lineFeed;

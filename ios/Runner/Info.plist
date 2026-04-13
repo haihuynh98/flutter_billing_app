@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Billing App</string>
+	<string>Ứng dụng bán hàng</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -46,12 +46,12 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>We need camera access to scan barcodes.</string>
+	<string>Ứng dụng cần quyền camera để quét mã vạch.</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>We need bluetooth to connect to thermal printers.</string>
+	<string>Ứng dụng cần quyền Bluetooth để kết nối máy in nhiệt.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>We need bluetooth to connect to thermal printers.</string>
+	<string>Ứng dụng cần quyền Bluetooth để kết nối máy in nhiệt.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>We need location access to find nearby printers.</string>
+	<string>Ứng dụng cần quyền vị trí để tìm máy in ở gần.</string>
 </dict>
 </plist>

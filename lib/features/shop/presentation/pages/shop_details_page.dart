@@ -79,7 +79,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text('Shop Details'),
+          title: const Text('Thông tin cửa hàng'),
         ),
         body: BlocConsumer<ShopBloc, ShopState>(
           listener: (context, state) {
@@ -87,7 +87,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
               _updateControllers(state.shop);
             } else if (state is ShopOperationSuccess) {
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('Shop details saved!'),
+                  content: Text('Đã lưu thông tin cửa hàng!'),
                   backgroundColor: Colors.green));
               context.pop();
             } else if (state is ShopError) {
@@ -109,7 +109,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text('General Information',
+                    Text('Thông tin chung',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -120,56 +120,56 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                       height: 5,
                     ),
                     Text(
-                      'These details will appear on your digital and printed receipts.',
+                      'Thông tin này sẽ hiển thị trên hóa đơn điện tử và hóa đơn in.',
                       style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                     ),
                     const SizedBox(height: 24),
-                    const InputLabel(text: 'Shop Name'),
+                    const InputLabel(text: 'Tên cửa hàng'),
                     _buildTextField(
                       controller: _nameController,
-                      hint: 'e.g. QuickMart Superstore',
-                      validator: AppValidators.required('Required'),
+                      hint: 'Ví dụ: Tạp hóa Minh Tâm',
+                      validator: AppValidators.required('Vui lòng nhập thông tin bắt buộc'),
                     ),
                     const SizedBox(height: 15),
-                    const InputLabel(text: 'Address Line 1'),
+                    const InputLabel(text: 'Địa chỉ dòng 1'),
                     _buildTextField(
                       controller: _address1Controller,
-                      hint: 'Samrajpet, Mecheri',
-                      validator: AppValidators.required('Required'),
+                      hint: 'Ví dụ: 123 Đường Trần Hưng Đạo',
+                      validator: AppValidators.required('Vui lòng nhập thông tin bắt buộc'),
                     ),
                     const SizedBox(height: 15),
-                    const InputLabel(text: 'Address Line 2 (Optional)'),
+                    const InputLabel(text: 'Địa chỉ dòng 2 (tuỳ chọn)'),
                     _buildTextField(
                       controller: _address2Controller,
-                      hint: 'Salem - 636453',
+                      hint: 'Phường, quận/huyện',
                     ),
                     const SizedBox(height: 15),
-                    const InputLabel(text: 'Phone Number'),
+                    const InputLabel(text: 'Số điện thoại'),
                     _buildTextField(
                       controller: _phoneController,
-                      hint: '+91 7010674588',
+                      hint: 'Ví dụ: 0901234567',
                       keyboardType: TextInputType.phone,
-                      validator: AppValidators.required('Required'),
+                      validator: AppValidators.required('Vui lòng nhập thông tin bắt buộc'),
                     ),
                     const SizedBox(height: 15),
-                    const InputLabel(text: 'UPI ID'),
+                    const InputLabel(text: 'Mã UPI'),
                     _buildTextField(
                       controller: _upiController,
-                      hint: 'dineshsowndar@oksbi',
+                      hint: 'cuahang@bank',
                     ),
                     const SizedBox(height: 15),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const InputLabel(text: 'Receipt Footer Text'),
-                        Text('Max 150 chars',
+                        const InputLabel(text: 'Lời nhắn cuối hoá đơn'),
+                        Text('Tối đa 60 ký tự',
                             style: TextStyle(
                                 fontSize: 11, color: Colors.grey[400])),
                       ],
                     ),
                     _buildTextField(
                       controller: _footerController,
-                      hint: 'Thank you, Visit again!!!',
+                      hint: 'Cảm ơn quý khách, hẹn gặp lại!',
                       maxLines: 2,
                       maxLength: 60,
                     ),
@@ -182,7 +182,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
         bottomNavigationBar: PrimaryButton(
           onPressed: _saveShop,
           icon: Icons.save,
-          label: 'Save Details',
+          label: 'Lưu thông tin',
         ));
   }
 
