@@ -11,7 +11,7 @@ class PrinterRepositoryImpl implements PrinterRepository {
     if (await _printerHelper.checkPermission()) {
       return await _printerHelper.getBondedDevices();
     }
-    throw Exception('Bluetooth permission denied');
+    throw Exception('Quyền Bluetooth bị từ chối');
   }
 
   @override
@@ -49,6 +49,6 @@ class PrinterRepositoryImpl implements PrinterRepository {
   @override
   Future<void> testPrint(String shopName) async {
     await _printerHelper
-        .printText("Test Print\n\n$shopName\n\n----------------\n\n");
+        .printText("In thu\n\n$shopName\n\n----------------\n\n");
   }
 }

@@ -18,12 +18,12 @@ class ShopRepositoryImpl implements ShopRepository {
       } else {
         // Return default shop if not found
         return const Right(Shop(
-            name: 'Dinesh Shop',
-            addressLine1: 'Samrajpet, Mecheri',
-            addressLine2: 'Salem - 636453',
-            phoneNumber: '+917010674588',
+            name: 'Cua hang mau',
+            addressLine1: '123 Nguyen Trai',
+            addressLine2: 'Quan 1, TP Ho Chi Minh',
+            phoneNumber: '+84901234567',
             upiId: 'dineshsowndar@oksbi',
-            footerText: 'Thank you, Visit again!!!'));
+            footerText: 'Cam on quy khach, hen gap lai!'));
       }
     } catch (e) {
       return Left(CacheFailure(e.toString()));
