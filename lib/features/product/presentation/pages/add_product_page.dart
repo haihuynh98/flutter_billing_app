@@ -43,7 +43,7 @@ class _AddProductPageState extends State<AddProductPage> {
       if (existingProduct != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Product with barcode "$_barcode" already exists!'),
+            content: Text('Sản phẩm có mã vạch "$_barcode" đã tồn tại!'),
             backgroundColor: Colors.red,
           ),
         );
@@ -73,7 +73,7 @@ class _AddProductPageState extends State<AddProductPage> {
                 size: 28, color: Theme.of(context).primaryColor),
             onPressed: () => context.pop(),
           ),
-          title: const Text('Add Product',
+          title: const Text('Thêm sản phẩm',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           centerTitle: true,
         ),
@@ -85,7 +85,7 @@ class _AddProductPageState extends State<AddProductPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const InputLabel(text: 'Barcode'),
+                  const InputLabel(text: 'Mã vạch'),
                   Row(
                     children: [
                       Expanded(
@@ -93,10 +93,10 @@ class _AddProductPageState extends State<AddProductPage> {
                           key: ValueKey(_barcode),
                           initialValue: _barcode,
                           decoration: const InputDecoration(
-                            hintText: 'Scan or enter barcode',
+                            hintText: 'Quét hoặc nhập mã vạch',
                           ),
                           validator:
-                              AppValidators.required('Please enter a barcode'),
+                              AppValidators.required('Vui lòng nhập mã vạch'),
                           onSaved: (value) => _barcode = value!,
                         ),
                       ),
@@ -116,26 +116,26 @@ class _AddProductPageState extends State<AddProductPage> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  const Text('Tap the icon to open camera scanner',
+                  const Text('Chạm biểu tượng để mở camera quét mã',
                       style: TextStyle(fontSize: 12, color: Color(0xFF4C669A))),
                   const SizedBox(height: 24),
-                  const InputLabel(text: 'Product Name'),
+                  const InputLabel(text: 'Tên sản phẩm'),
                   TextFormField(
                     decoration: const InputDecoration(
-                      hintText: 'e.g. Basmati Rice',
+                      hintText: 'Ví dụ: Gạo ST25',
                     ),
                     textCapitalization: TextCapitalization.words,
-                    validator: AppValidators.required('Please enter a name'),
+                    validator: AppValidators.required('Vui lòng nhập tên'),
                     onSaved: (value) => _name = value!,
                   ),
                   const SizedBox(height: 24),
-                  const InputLabel(text: 'Price'),
+                  const InputLabel(text: 'Giá'),
                   TextFormField(
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
-                      hintText: '0.00',
-                      prefixText: '₹ ',
+                      hintText: '0',
+                      prefixText: '₫ ',
                       prefixStyle: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
@@ -152,7 +152,7 @@ class _AddProductPageState extends State<AddProductPage> {
         bottomNavigationBar: PrimaryButton(
           onPressed: _submit,
           icon: Icons.add_circle,
-          label: 'Add Product',
+          label: 'Thêm sản phẩm',
         ));
   }
 }

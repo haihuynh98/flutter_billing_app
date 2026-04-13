@@ -28,7 +28,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         },
         child: Scaffold(
           appBar: AppBar(
-            title: const Text('Checkout',
+            title: const Text('Thanh toán',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
             centerTitle: true,
             backgroundColor: Colors.transparent,
@@ -46,7 +46,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
             listener: (context, state) {
               if (state.printSuccess) {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text('Printed successfully'),
+                    content: Text('In hóa đơn thành công'),
                     backgroundColor: Colors.green));
                 // context.read<BillingBloc>().add(ClearCartEvent());
                 // context.go('/');
@@ -56,7 +56,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
               return BlocBuilder<ShopBloc, ShopState>(
                   builder: (context, shopState) {
                 String upiId = '';
-                String shopName = 'Shop';
+                String shopName = 'Cửa hàng';
 
                 if (shopState is ShopLoaded) {
                   upiId = shopState.shop.upiId;
@@ -104,11 +104,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                       ),
                                       children: [
                                         _buildHeaderCell(
-                                            'Product Name', TextAlign.left),
+                                            'Tên sản phẩm', TextAlign.left),
                                         _buildHeaderCell(
-                                            'Price', TextAlign.right),
+                                            'Đơn giá', TextAlign.right),
                                         _buildHeaderCell(
-                                            'Total', TextAlign.right),
+                                            'Thành tiền', TextAlign.right),
                                       ],
                                     ),
                                     // Items rows
@@ -120,11 +120,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                             TextAlign.left,
                                           ),
                                           _buildDataCell(
-                                              '₹${item.product.price.toStringAsFixed(2)}',
+                                              '₫${item.product.price.toStringAsFixed(0)}',
                                               TextAlign.right,
                                               isSubtitle: true),
                                           _buildDataCell(
-                                              '₹${item.total.toStringAsFixed(2)}',
+                                              '₫${item.total.toStringAsFixed(0)}',
                                               TextAlign.right,
                                               isBold: true),
                                         ],
@@ -174,7 +174,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                     ? Column(
                                         children: [
                                           const Text(
-                                            'Scan to Pay',
+                                            'Quét để thanh toán',
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
@@ -200,7 +200,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      'GRAND TOTAL',
+                                      'TỔNG CỘNG',
                                       style: TextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
@@ -209,7 +209,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                       ),
                                     ),
                                     Text(
-                                      '₹${billingState.totalAmount.toStringAsFixed(2)}',
+                                      '₫${billingState.totalAmount.toStringAsFixed(0)}',
                                       style: const TextStyle(
                                         fontSize: 24,
                                         fontWeight: FontWeight.bold,
@@ -235,12 +235,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                        content:
-                                            Text('Shop details not loaded'),
+                                        content: Text(
+                                            'Chưa tải được thông tin cửa hàng'),
                                         backgroundColor: Colors.red));
                               }
                             },
-                            label: 'Print Receipt',
+                            label: 'In hóa đơn',
                             icon: Icons.print,
                             isLoading: billingState.isPrinting,
                           ),
