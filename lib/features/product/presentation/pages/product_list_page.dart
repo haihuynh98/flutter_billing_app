@@ -60,7 +60,7 @@ class _ProductListPageState extends State<ProductListPage> {
               size: 28, color: Theme.of(context).primaryColor),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Product Management',
+        title: const Text('Quản lý sản phẩm',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         centerTitle: true,
       ),
@@ -81,14 +81,14 @@ class _ProductListPageState extends State<ProductListPage> {
                           controller: _searchController,
                           textCapitalization: TextCapitalization.words,
                           decoration: InputDecoration(
-                            hintText: 'Scan or enter barcode',
+                            hintText: 'Quét hoặc nhập mã vạch',
                             prefixIcon: Icon(
                               Icons.search,
                               color: Colors.grey[400],
                             ),
                           ),
                           validator:
-                              AppValidators.required('Please enter a barcode'),
+                              AppValidators.required('Vui lòng nhập mã vạch'),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -107,7 +107,7 @@ class _ProductListPageState extends State<ProductListPage> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  const Text('Tap the icon to open camera scanner',
+                  const Text('Nhấn vào biểu tượng để mở camera quét mã',
                       style: TextStyle(fontSize: 12, color: Color(0xFF4C669A))),
                 ],
               );
@@ -141,10 +141,10 @@ class _ProductListPageState extends State<ProductListPage> {
 
                 if (state.products.isEmpty) {
                   if (state.status == ProductStatus.error) {
-                    return Center(child: Text('Error: ${state.message}'));
+                    return Center(child: Text('Lỗi: ${state.message}'));
                   }
                   return const Center(
-                      child: Text('No products found. Add some!'));
+                      child: Text('Chưa có sản phẩm nào. Hãy thêm mới!'));
                 }
 
                 final filteredProducts = state.products
@@ -155,7 +155,7 @@ class _ProductListPageState extends State<ProductListPage> {
 
                 if (filteredProducts.isEmpty) {
                   return const Center(
-                      child: Text('No products match your search.'));
+                      child: Text('Không có sản phẩm phù hợp với từ khóa tìm kiếm.'));
                 }
 
                 return ListView.separated(
@@ -264,19 +264,19 @@ class _ProductListPageState extends State<ProductListPage> {
       context: context,
       builder: (innerContext) {
         return AlertDialog(
-          title: const Text('Delete Product'),
-          content: Text('Are you sure you want to delete ${product.name}?'),
+          title: const Text('Xóa sản phẩm'),
+          content: Text('Bạn có chắc chắn muốn xóa ${product.name}?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(innerContext),
-              child: const Text('Cancel'),
+              child: const Text('Hủy'),
             ),
             TextButton(
               onPressed: () {
                 context.read<ProductBloc>().add(DeleteProduct(product.id));
                 Navigator.pop(innerContext);
               },
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+              child: const Text('Xóa', style: TextStyle(color: Colors.red)),
             ),
           ],
         );
