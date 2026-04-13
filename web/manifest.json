@@ -1,11 +1,11 @@
 {
-    "name": "billing_app",
-    "short_name": "billing_app",
+    "name": "Ứng Dụng Tính Tiền",
+    "short_name": "Tính Tiền",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Ứng dụng tính tiền và quản lý bán hàng offline cho cửa hàng bán lẻ.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
