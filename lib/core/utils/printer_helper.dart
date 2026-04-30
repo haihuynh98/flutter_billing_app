@@ -152,7 +152,7 @@ class PrinterHelper {
 
     // Header (Align Left)
     bytes += EscPos.alignLeft;
-    bytes += _textToBytes('Item            Price   Total');
+    bytes += _textToBytes('Mat hang         Gia  Thanh tien');
     bytes += EscPos.lineFeed;
     bytes += _textToBytes('--------------------------------');
     bytes += EscPos.lineFeed;
@@ -178,7 +178,7 @@ class PrinterHelper {
     // Total (Align Right)
     bytes += EscPos.alignRight;
     bytes += EscPos.boldOn;
-    bytes += _textToBytes('TOTAL: $total');
+    bytes += _textToBytes('TONG CONG: $total');
     bytes += EscPos.lineFeed;
     bytes += EscPos.boldOff;
     bytes += EscPos.lineFeed;
