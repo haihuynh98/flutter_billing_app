@@ -1,4 +1,5 @@
 import 'package:intl/intl.dart';
+import 'package:charset/charset.dart';
 import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -11,11 +12,18 @@ class EscPos {
   static const List<int> boldOff = [0x1B, 0x45, 0x00];
   static const List<int> textNormal = [0x1D, 0x21, 0x00];
   static const List<int> textLarge = [0x1D, 0x21, 0x11];
+  static const List<int> forceTextMode = [0x1B, 0x21, 0x00];
+  static const List<int> cancelChineseMode = [0x1C, 0x2E];
+  static const List<int> setInternationalCharsetUsa = [0x1B, 0x52, 0x00];
   static const List<int> lineFeed = [0x0A];
+
+  static const int codeTablePc858 = 19;
+  static const int codeTableWpc1258 = 52;
+
+  static List<int> selectCodeTable(int codeTable) => [0x1B, 0x74, codeTable];
 }
 
 class PrinterHelper {
-  // Singleton
   static final PrinterHelper _instance = PrinterHelper._internal();
   factory PrinterHelper() => _instance;
   PrinterHelper._internal();
@@ -24,11 +32,7 @@ class PrinterHelper {
   bool get isConnected => _isConnected;
 
   Future<bool> checkPermission() async {
-    // Request Bluetooth and Location permissions
-    // Android 12+ needs BLUETOOTH_SCAN, BLUETOOTH_CONNECT
-    // Older Android needs BLUETOOTH, BLUETOOTH_ADMIN, ACCESS_FINE_LOCATION
-
-    Map<Permission, PermissionStatus> statuses = await [
+    final Map<Permission, PermissionStatus> statuses = await [
       Permission.bluetooth,
       Permission.bluetoothScan,
       Permission.bluetoothConnect,
@@ -63,8 +67,7 @@ class PrinterHelper {
   Future<bool> disconnect() async {
     try {
       final bool result = await PrintBluetoothThermal.disconnect;
-      _isConnected =
-          !result; // If disconnected successfully, isConnected is false
+      _isConnected = !result;
       return result;
     } catch (e) {
       return false;
@@ -74,33 +77,12 @@ class PrinterHelper {
   Future<void> printText(String text) async {
     if (!_isConnected) return;
 
-    // Simple text printing
-    // We can use bytes for advanced formatting
-    // But plugin supports basic text or bytes
-
-    // Checking battery or connection status
     final bool connectionStatus = await PrintBluetoothThermal.connectionStatus;
-    if (connectionStatus) {
-      // Plugin allows sending bytes. We need ESC/POS commands for text.
-      // However, the plugin might have helper.
-      // Looking at doc, `writeBytes` or `writeString`?
-      // The plugin `print_bluetooth_thermal` mainly exposes `writeBytes`.
-      // We need a generator. `esc_pos_utils` is common but not requested.
-      // But wait, `print_bluetooth_thermal` example often uses `capability_profile` and `generator`.
-      // I don't have `esc_pos_utils` or similar in my pubspec.
-      // The user requested `print_bluetooth_thermal`.
-      // Let's assume we can send raw string bytes or use a simple helper.
-      // Actually without `esc_pos_utils`, formatting is hard.
-      // I will try to use `esc_pos_utils_plus` or similar if I can add it, but user gave specific packages.
-      // Wait, user allowed "use required plugins".
-      // "suggest barcode scanner ... and use required plugins".
-      // So I can add `esc_pos_utils_plus`.
+    if (!connectionStatus) return;
 
-      // For now, I'll assume simple text printing by converting string to bytes.
-      // ASCII bytes.
-      List<int> bytes = text.codeUnits;
-      await PrintBluetoothThermal.writeBytes(bytes);
-    }
+    final List<int> bytes = _buildVietnameseTextModeSetup();
+    _appendEncodedText(bytes, text);
+    await PrintBluetoothThermal.writeBytes(bytes);
   }
 
   Future<void> printReceipt({
@@ -113,89 +95,119 @@ class PrinterHelper {
     required String footer,
   }) async {
     if (!_isConnected) return;
+    final bool connectionStatus = await PrintBluetoothThermal.connectionStatus;
+    if (!connectionStatus) return;
 
-    // Construct ESC/POS bytes manually or using helper
-    List<int> bytes = [];
+    List<int> bytes = _buildVietnameseTextModeSetup();
 
-    // Init
-    bytes += EscPos.init;
-
-    // Shop Name (Center, Bold, Large)
     bytes += EscPos.alignCenter;
     bytes += EscPos.boldOn;
     bytes += EscPos.textLarge;
-    bytes += _textToBytes(shopName);
+    _appendEncodedText(bytes, shopName);
     bytes += EscPos.lineFeed;
 
-    // Address & Phone (Normal, Center)
     bytes += EscPos.textNormal;
     bytes += EscPos.boldOff;
     if (address1.isNotEmpty) {
-      bytes += _textToBytes(address1);
+      _appendEncodedText(bytes, address1);
       bytes += EscPos.lineFeed;
     }
     if (address2.isNotEmpty) {
-      bytes += _textToBytes(address2);
+      _appendEncodedText(bytes, address2);
       bytes += EscPos.lineFeed;
     }
-    bytes += _textToBytes(phone);
+    _appendEncodedText(bytes, phone);
     bytes += EscPos.lineFeed;
 
-    // Date and Time
-    String formattedDate =
+    final String formattedDate =
         DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now());
-    bytes += _textToBytes(formattedDate);
+    _appendEncodedText(bytes, formattedDate);
     bytes += EscPos.lineFeed;
 
-    bytes += _textToBytes('--------------------------------');
+    _appendEncodedText(bytes, '--------------------------------');
     bytes += EscPos.lineFeed;
 
-    // Header (Align Left)
     bytes += EscPos.alignLeft;
-    bytes += _textToBytes('Mat hang         Gia  Thanh tien');
+    _appendEncodedText(bytes, 'Mat hang         Gia  Thanh tien');
     bytes += EscPos.lineFeed;
-    bytes += _textToBytes('--------------------------------');
+    _appendEncodedText(bytes, '--------------------------------');
     bytes += EscPos.lineFeed;
 
-    // Items
-    for (var item in items) {
-      String name = item['name'].toString();
-      String qty = item['qty'].toString();
-      String price = item['price'].toString();
-      String totalItem = item['total'].toString();
+    for (final item in items) {
+      final String name = item['name'].toString();
+      final String qty = item['qty'].toString();
+      final String price = item['price'].toString();
+      final String totalItem = item['total'].toString();
 
       String prefix = '${qty}x $name';
       if (prefix.length > 16) prefix = prefix.substring(0, 16);
 
-      String line = prefix.padRight(16) + price.padRight(8) + totalItem;
-      bytes += _textToBytes(line);
+      final String line = prefix.padRight(16) + price.padRight(8) + totalItem;
+      _appendEncodedText(bytes, line);
       bytes += EscPos.lineFeed;
     }
 
-    bytes += _textToBytes('--------------------------------');
+    _appendEncodedText(bytes, '--------------------------------');
     bytes += EscPos.lineFeed;
 
-    // Total (Align Right)
     bytes += EscPos.alignRight;
     bytes += EscPos.boldOn;
-    bytes += _textToBytes('TONG CONG: $total');
+    _appendEncodedText(bytes, 'TONG CONG: $total');
     bytes += EscPos.lineFeed;
     bytes += EscPos.boldOff;
     bytes += EscPos.lineFeed;
 
-    // Footer (Center)
     bytes += EscPos.alignCenter;
-    bytes += _textToBytes(footer);
+    _appendEncodedText(bytes, footer);
     bytes += EscPos.lineFeed;
-    bytes += EscPos.lineFeed; // One line space after footer
     bytes += EscPos.lineFeed;
-    bytes += EscPos.lineFeed; // Additional Feed
+    bytes += EscPos.lineFeed;
+    bytes += EscPos.lineFeed;
 
     await PrintBluetoothThermal.writeBytes(bytes);
   }
 
-  List<int> _textToBytes(String text) {
-    // Should verify encoding, but Latin-1 usually works for basic printers
-    return List.from(text.codeUnits);
+  List<int> _buildVietnameseTextModeSetup() {
+    return <int>[
+      ...EscPos.init,
+      ...EscPos.cancelChineseMode,
+      ...EscPos.setInternationalCharsetUsa,
+      ...EscPos.forceTextMode,
+      ...EscPos.selectCodeTable(EscPos.codeTableWpc1258),
+    ];
   }
+
+  void _appendEncodedText(List<int> output, String text) {
+    final _EncodedText encodedText = _encodeText(text);
+    output.addAll(EscPos.selectCodeTable(encodedText.codeTable));
+    output.addAll(encodedText.bytes);
+  }
+
+  _EncodedText _encodeText(String text) {
+    try {
+      return _EncodedText(
+        bytes: List<int>.from(windows1258.encode(text, invalidCharacter: 0x3F)),
+        codeTable: EscPos.codeTableWpc1258,
+      );
+    } catch (_) {
+      try {
+        return _EncodedText(
+          bytes: List<int>.from(cp858.encode(text, invalidCharacter: 0x3F)),
+          codeTable: EscPos.codeTablePc858,
+        );
+      } catch (_) {
+        return _EncodedText(
+          bytes: text.codeUnits.map((int unit) => unit <= 0xFF ? unit : 0x3F).toList(),
+          codeTable: EscPos.codeTablePc858,
+        );
+      }
+    }
+  }
+}
+
+class _EncodedText {
+  const _EncodedText({required this.bytes, required this.codeTable});
+
+  final List<int> bytes;
+  final int codeTable;
 }
