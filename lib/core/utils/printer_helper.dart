@@ -98,7 +98,7 @@ class PrinterHelper {
     final bool connectionStatus = await PrintBluetoothThermal.connectionStatus;
     if (!connectionStatus) return;
 
-    final List<int> bytes = _buildVietnameseTextModeSetup();
+    List<int> bytes = _buildVietnameseTextModeSetup();
 
     bytes += EscPos.alignCenter;
     bytes += EscPos.boldOn;

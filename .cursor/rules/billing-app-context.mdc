@@ -1,0 +1,12 @@
+---
+description: Flutter billing POS — read AGENTS.md for structure and flows
+alwaysApply: true
+---
+
+# flutter_billing_app
+
+Before non-trivial edits, skim **AGENTS.md** (repo root) for routes, DI, Hive boxes, and feature boundaries.
+
+- Preserve **feature-first Clean Architecture**: `domain` ← `data` ← `presentation`; no UI calling Hive/repositories directly except via existing bloc/usecase patterns.
+- **BillingBloc** is provided in `main.dart`, not registered in `service_locator.dart`.
+- Regenerate code after model/adapter changes: `dart run build_runner build --delete-conflicting-outputs`.
