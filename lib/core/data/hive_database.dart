@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:hive_flutter/hive_flutter.dart';
 import '../../features/product/data/models/product_model.dart';
 import '../../features/shop/data/models/shop_model.dart';
@@ -18,6 +20,21 @@ class HiveDatabase {
     await Hive.openBox<ProductModel>(productBoxName);
     await Hive.openBox<ShopModel>(shopBoxName);
     await Hive.openBox(settingsBoxName); // Generic box for simple key-value
+  }
+
+  /// VM tests only: avoids [Hive.initFlutter] / path_provider (not available in widget tests).
+  static Future<void> initForTests() async {
+    final dir = Directory.systemTemp.createTempSync('billing_hive_test_');
+    Hive.init(dir.path);
+    if (!Hive.isAdapterRegistered(0)) {
+      Hive.registerAdapter(ProductModelAdapter());
+    }
+    if (!Hive.isAdapterRegistered(1)) {
+      Hive.registerAdapter(ShopModelAdapter());
+    }
+    await Hive.openBox<ProductModel>(productBoxName);
+    await Hive.openBox<ShopModel>(shopBoxName);
+    await Hive.openBox(settingsBoxName);
   }
 
   static Box<ProductModel> get productBox =>
