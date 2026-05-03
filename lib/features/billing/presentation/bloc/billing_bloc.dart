@@ -1,89 +1,279 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import '../../domain/entities/cart_item.dart';
-import 'package:billing_app/features/product/domain/entities/product.dart';
-import 'package:billing_app/features/product/domain/usecases/product_usecases.dart';
+
 import '../../../../core/utils/printer_helper.dart';
 import '../../../../core/data/hive_database.dart';
+import '../../../invoice/domain/entities/invoice.dart';
+import '../../../invoice/domain/entities/invoice_item.dart';
+import '../../../invoice/domain/entities/invoice_status.dart';
+import '../../../invoice/domain/usecases/invoice_usecases.dart';
+import '../../../product/domain/entities/product.dart';
+import '../../../product/domain/usecases/product_usecases.dart';
+import '../../../stock/domain/entities/stock_batch.dart';
+import '../../../stock/domain/usecases/stock_usecases.dart';
+import '../../../../core/usecase/usecase.dart';
 
 part 'billing_event.dart';
 part 'billing_state.dart';
 
 class BillingBloc extends Bloc<BillingEvent, BillingState> {
   final GetProductByBarcodeUseCase getProductByBarcodeUseCase;
+  final CreateDraftInvoiceUseCase createDraftInvoiceUseCase;
+  final GetInvoiceUseCase getInvoiceUseCase;
+  final AddOrIncrementInvoiceItemUseCase addOrIncrementInvoiceItemUseCase;
+  final UpdateInvoiceItemQuantityUseCase updateInvoiceItemQuantityUseCase;
+  final RemoveInvoiceItemUseCase removeInvoiceItemUseCase;
+  final ConfirmInvoiceUseCase confirmInvoiceUseCase;
+  final CancelDraftInvoiceUseCase cancelDraftInvoiceUseCase;
+  final ListBatchesByProductUseCase listBatchesByProductUseCase;
 
-  BillingBloc({required this.getProductByBarcodeUseCase})
-      : super(const BillingState()) {
+  BillingBloc({
+    required this.getProductByBarcodeUseCase,
+    required this.createDraftInvoiceUseCase,
+    required this.getInvoiceUseCase,
+    required this.addOrIncrementInvoiceItemUseCase,
+    required this.updateInvoiceItemQuantityUseCase,
+    required this.removeInvoiceItemUseCase,
+    required this.confirmInvoiceUseCase,
+    required this.cancelDraftInvoiceUseCase,
+    required this.listBatchesByProductUseCase,
+  }) : super(const BillingState()) {
     on<ScanBarcodeEvent>(_onScanBarcode);
-    on<AddProductToCartEvent>(_onAddProductToCart);
-    on<RemoveProductFromCartEvent>(_onRemoveProductFromCart);
+    on<PickSourceEvent>(_onPickSource);
+    on<ClearPendingPickEvent>(_onClearPendingPick);
     on<UpdateQuantityEvent>(_onUpdateQuantity);
+    on<RemoveProductFromCartEvent>(_onRemoveProduct);
     on<ClearCartEvent>(_onClearCart);
+    on<ClearCurrentInvoiceEvent>(_onClearCurrentInvoice);
+    on<OpenDraftInvoiceEvent>(_onOpenDraft);
+    on<ConfirmInvoiceEvent>(_onConfirmInvoice);
     on<PrintReceiptEvent>(_onPrintReceipt);
+  }
+
+  bool _needsNewDraftInvoice() {
+    final inv = state.currentInvoice;
+    return inv == null || inv.status != InvoiceStatus.draft;
   }
 
   Future<void> _onScanBarcode(
       ScanBarcodeEvent event, Emitter<BillingState> emit) async {
-    final result = await getProductByBarcodeUseCase(event.barcode);
-    result.fold(
-      (failure) =>
-          emit(state.copyWith(error: 'Không tìm thấy sản phẩm: ${event.barcode}')),
-      (product) {
-        add(AddProductToCartEvent(product));
+    emit(state.copyWith(clearError: true, clearPendingProduct: true));
+
+    final productResult = await getProductByBarcodeUseCase(event.barcode);
+    await productResult.fold<Future<void>>(
+      (failure) async {
+        emit(state.copyWith(
+            error: 'Không tìm thấy sản phẩm: ${event.barcode}'));
+      },
+      (product) async {
+        final batchesResult = await listBatchesByProductUseCase(product.id);
+        await batchesResult.fold<Future<void>>(
+          (failure) async {
+            emit(state.copyWith(error: failure.message));
+          },
+          (batches) async {
+            final available =
+                batches.where((b) => b.quantity > 0).toList();
+            if (available.isEmpty) {
+              emit(state.copyWith(
+                  error: 'Sản phẩm ${product.name} không còn tồn kho'));
+              return;
+            }
+            if (available.length == 1 && !available.single.isExpired) {
+              await _addItem(
+                emit,
+                product: product,
+                batch: available.single,
+              );
+              return;
+            }
+            emit(state.copyWith(
+              pendingProduct: product,
+              pendingSources: available,
+            ));
+          },
+        );
       },
     );
   }
 
-  void _onAddProductToCart(
-      AddProductToCartEvent event, Emitter<BillingState> emit) {
-    // Clear error when adding
-    final cleanState = state.copyWith(error: null);
+  Future<void> _onPickSource(
+      PickSourceEvent event, Emitter<BillingState> emit) async {
+    await _addItem(
+      emit,
+      product: event.product,
+      batch: event.batch,
+      clearPending: true,
+    );
+  }
 
-    final existingIndex = cleanState.cartItems
-        .indexWhere((item) => item.product.id == event.product.id);
-    if (existingIndex >= 0) {
-      final existingItem = cleanState.cartItems[existingIndex];
-      final backendItems = List<CartItem>.from(cleanState.cartItems);
-      backendItems[existingIndex] =
-          existingItem.copyWith(quantity: existingItem.quantity + 1);
-      emit(cleanState.copyWith(cartItems: backendItems, error: null));
+  void _onClearPendingPick(
+      ClearPendingPickEvent event, Emitter<BillingState> emit) {
+    emit(state.copyWith(clearPendingProduct: true));
+  }
+
+  Future<void> _addItem(
+    Emitter<BillingState> emit, {
+    required Product product,
+    required StockBatch batch,
+    bool clearPending = false,
+  }) async {
+    late final Invoice invoice;
+    if (_needsNewDraftInvoice()) {
+      final draftR = await createDraftInvoiceUseCase(NoParams());
+      final created = draftR.fold<Invoice?>((f) {
+        emit(state.copyWith(error: f.message));
+        return null;
+      }, (d) => d);
+      if (created == null) return;
+      invoice = created;
     } else {
-      final newItem = CartItem(product: event.product);
-      emit(cleanState.copyWith(
-          cartItems: [...cleanState.cartItems, newItem], error: null));
+      invoice = state.currentInvoice!;
     }
+
+    final item = InvoiceItem(
+      productId: product.id,
+      productName: product.name,
+      price: product.price,
+      quantity: 1,
+      sourceWarehouseId: batch.warehouseId,
+      sourceBatchId: batch.id,
+    );
+
+    final addR = await addOrIncrementInvoiceItemUseCase(
+      AddOrIncrementInvoiceItemParams(invoiceId: invoice.id, itemDelta: item),
+    );
+
+    addR.fold(
+      (f) {
+        emit(state.copyWith(
+          error: f.message,
+          clearPendingProduct: clearPending,
+        ));
+      },
+      (updated) {
+        emit(state.copyWith(
+          currentInvoice: updated,
+          clearPendingProduct: clearPending,
+          clearError: true,
+        ));
+      },
+    );
   }
 
-  void _onRemoveProductFromCart(
-      RemoveProductFromCartEvent event, Emitter<BillingState> emit) {
-    final updatedList = state.cartItems
-        .where((item) => item.product.id != event.productId)
-        .toList();
-    emit(state.copyWith(cartItems: updatedList));
-  }
+  Future<void> _onUpdateQuantity(
+      UpdateQuantityEvent event, Emitter<BillingState> emit) async {
+    final inv = state.currentInvoice;
+    if (inv == null || inv.status != InvoiceStatus.draft) return;
 
-  void _onUpdateQuantity(
-      UpdateQuantityEvent event, Emitter<BillingState> emit) {
     if (event.quantity <= 0) {
-      add(RemoveProductFromCartEvent(event.productId));
+      add(RemoveProductFromCartEvent(event.productId, event.sourceBatchId));
       return;
     }
 
-    final index = state.cartItems
-        .indexWhere((item) => item.product.id == event.productId);
-    if (index >= 0) {
-      final items = List<CartItem>.from(state.cartItems);
-      items[index] = items[index].copyWith(quantity: event.quantity);
-      emit(state.copyWith(cartItems: items));
-    }
+    final r = await updateInvoiceItemQuantityUseCase(
+      UpdateInvoiceItemQuantityParams(
+        invoiceId: inv.id,
+        productId: event.productId,
+        sourceBatchId: event.sourceBatchId,
+        quantity: event.quantity,
+      ),
+    );
+    r.fold(
+      (f) => emit(state.copyWith(error: f.message)),
+      (updated) => emit(state.copyWith(currentInvoice: updated, clearError: true)),
+    );
   }
 
-  void _onClearCart(ClearCartEvent event, Emitter<BillingState> emit) {
-    emit(const BillingState());
+  Future<void> _onRemoveProduct(
+      RemoveProductFromCartEvent event, Emitter<BillingState> emit) async {
+    final inv = state.currentInvoice;
+    if (inv == null || inv.status != InvoiceStatus.draft) return;
+
+    final r = await removeInvoiceItemUseCase(
+      RemoveInvoiceItemParams(
+        invoiceId: inv.id,
+        productId: event.productId,
+        sourceBatchId: event.sourceBatchId,
+      ),
+    );
+    await r.fold<Future<void>>(
+      (f) async => emit(state.copyWith(error: f.message)),
+      (updated) async {
+        if (updated.items.isEmpty) {
+          await cancelDraftInvoiceUseCase(inv.id);
+          emit(state.clearInvoice().copyWith(clearError: true));
+        } else {
+          emit(state.copyWith(currentInvoice: updated, clearError: true));
+        }
+      },
+    );
+  }
+
+  Future<void> _onClearCart(
+      ClearCartEvent event, Emitter<BillingState> emit) async {
+    final inv = state.currentInvoice;
+    if (inv != null && inv.status == InvoiceStatus.draft) {
+      await cancelDraftInvoiceUseCase(inv.id);
+    }
+    emit(state.clearInvoice().copyWith(clearError: true));
+  }
+
+  void _onClearCurrentInvoice(
+      ClearCurrentInvoiceEvent event, Emitter<BillingState> emit) {
+    emit(state.clearInvoice().copyWith(clearError: true));
+  }
+
+  Future<void> _onOpenDraft(
+      OpenDraftInvoiceEvent event, Emitter<BillingState> emit) async {
+    final r = await getInvoiceUseCase(event.invoiceId);
+    r.fold(
+      (f) => emit(state.copyWith(error: f.message)),
+      (inv) {
+        if (inv == null) {
+          emit(state.copyWith(error: 'Không tìm thấy hóa đơn'));
+          return;
+        }
+        if (inv.status != InvoiceStatus.draft) {
+          emit(state.copyWith(error: 'Chỉ mở được đơn đang thực hiện'));
+          return;
+        }
+        emit(state.copyWith(currentInvoice: inv, clearError: true));
+      },
+    );
+  }
+
+  Future<void> _onConfirmInvoice(
+      ConfirmInvoiceEvent event, Emitter<BillingState> emit) async {
+    final inv = state.currentInvoice;
+    if (inv == null || inv.status != InvoiceStatus.draft) return;
+
+    emit(state.copyWith(isConfirming: true, clearError: true));
+    final r = await confirmInvoiceUseCase(inv.id);
+    r.fold(
+      (f) {
+        emit(state.copyWith(
+            isConfirming: false, error: f.message, clearConfirmSuccess: true));
+      },
+      (updated) {
+        emit(state.copyWith(
+          isConfirming: false,
+          currentInvoice: updated,
+          confirmSuccess: true,
+          clearConfirmSuccess: false,
+        ));
+      },
+    );
   }
 
   Future<void> _onPrintReceipt(
       PrintReceiptEvent event, Emitter<BillingState> emit) async {
+    final inv = state.currentInvoice;
+    if (inv == null) {
+      emit(state.copyWith(error: 'Không có hóa đơn để in'));
+      return;
+    }
+
     final printerHelper = PrinterHelper();
 
     if (!printerHelper.isConnected) {
@@ -91,30 +281,27 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       if (savedMac != null) {
         final connected = await printerHelper.connect(savedMac);
         if (!connected) {
-          emit(state.copyWith(
-              error: 'Không thể tự động kết nối máy in!', clearError: false));
+          emit(state.copyWith(error: 'Không thể tự động kết nối máy in!'));
           emit(state.copyWith(clearError: true));
           return;
         }
       } else {
         emit(state.copyWith(
-            error: 'Máy in chưa được kết nối và không có thiết bị đã lưu!',
-            clearError: false));
+            error: 'Máy in chưa được kết nối và không có thiết bị đã lưu!'));
         emit(state.copyWith(clearError: true));
         return;
       }
     }
 
-    emit(state.copyWith(
-        isPrinting: true, printSuccess: false, clearError: true));
+    emit(state.copyWith(isPrinting: true, printSuccess: false, clearError: true));
 
     try {
-      final items = state.cartItems
+      final items = inv.items
           .map((item) => {
-                'name': item.product.name,
+                'name': item.productName,
                 'qty': item.quantity,
-                'price': item.product.price,
-                'total': item.total,
+                'price': item.price,
+                'total': item.lineTotal,
               })
           .toList();
 
@@ -124,14 +311,12 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
           address2: event.address2,
           phone: event.phone,
           items: items,
-          total: state.totalAmount,
+          total: inv.total,
           footer: event.footer);
 
       emit(state.copyWith(isPrinting: false, printSuccess: true));
     } catch (e) {
-      emit(state.copyWith(
-          isPrinting: false, error: 'In thất bại: $e', clearError: false));
-      // Reset error instantly avoids sticky error
+      emit(state.copyWith(isPrinting: false, error: 'In thất bại: $e'));
       emit(state.copyWith(clearError: true));
     }
   }

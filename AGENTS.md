@@ -17,9 +17,9 @@ Offline POS/billing Flutter app: product catalog, barcode scan, cart, checkout, 
 ## Boot sequence
 
 1. `WidgetsFlutterBinding.ensureInitialized()`
-2. `HiveDatabase.init()` — register `ProductModel` / `ShopModel` adapters, open boxes
+2. `HiveDatabase.init()` — register adapters (products, shop, warehouses, stock batches/movements, invoice + line items), open boxes, `_runStockMigration()` (default **Kho chính** + seed batches from legacy product stock)
 3. `service_locator.init()` — register repos, use cases, blocs
-4. `MultiBlocProvider`: `ProductBloc`, `ShopBloc`, `BillingBloc`, `PrinterBloc` (initial events: load products, load shop, init printer)
+4. `MultiBlocProvider`: `ProductBloc`, `ShopBloc`, `WarehouseBloc`, `StockBloc`, `InvoiceBloc`, `BillingBloc`, `PrinterBloc` (initial: load products, shop, warehouses, init printer)
 5. `MaterialApp.router` + `router` from `app_routes.dart`
 
 ## Layout (`lib/`)
@@ -28,9 +28,12 @@ Offline POS/billing Flutter app: product catalog, barcode scan, cart, checkout, 
 core/           theme, widgets, utils (printer_helper, validators), hive init, service_locator, usecase base, failure
 config/routes/  go_router
 features/
-  billing/      cart, scan UX, checkout, receipt print (domain/presentation; cart in BillingBloc)
+  billing/      scan UX, checkout, draft invoice lines in BillingBloc (pick warehouse batch), print
   product/      CRUD, list/add/edit, barcode in domain
   shop/         single shop profile for receipt header
+  warehouse/    CRUD warehouses, default warehouse migration
+  stock/        batches (import price, supplier, expiry), movements, import UI
+  invoice/      draft → confirm (stock deduction), history/detail
   settings/     printer pairing / PrinterBloc, SettingsPage
 ```
 
@@ -47,13 +50,22 @@ Each feature: `data` (repos, models), `domain` (entities, repo interfaces, use c
 | `/products` | `ProductListPage` |
 | `/products/add` | `AddProductPage` |
 | `/products/edit/:id` | `EditProductPage` — expects `state.extra` as `Product` |
+| `/products/:productId/import` | `ImportStockPage` |
+| `/products/:productId/stock` | `ProductStockPage` |
+| `/warehouses` | `WarehouseListPage` |
+| `/warehouses/add` | `AddWarehousePage` |
+| `/warehouses/edit/:id` | `EditWarehousePage` — `state.extra` optional `Warehouse` |
+| `/warehouses/:id` | `WarehouseDetailPage` |
+| `/warehouses/:id/import` | `ImportStockPage` (preset warehouse) |
+| `/invoices` | `InvoiceHistoryPage` |
+| `/invoices/:id` | `InvoiceDetailPage` — `state.extra` as `Invoice` |
 | `/shop` | `ShopDetailsPage` |
 
 ## DI (`service_locator.dart`)
 
-- **Factory**: `ProductBloc`, `ShopBloc`, `PrinterBloc`
-- **Singletons**: product/shop use cases, `ProductRepositoryImpl`, `ShopRepositoryImpl`, `PrinterRepositoryImpl`
-- **BillingBloc** is not in GetIt — constructed in `main.dart` with `GetProductByBarcodeUseCase` only
+- **Factory**: `ProductBloc`, `ShopBloc`, `PrinterBloc`, `WarehouseBloc`, `StockBloc`, `InvoiceBloc`
+- **Singletons**: product/shop/printer/warehouse/stock/invoice repos and their use cases
+- **BillingBloc** is not in GetIt — constructed in `main.dart` with invoice + stock use cases (barcode, draft lines, confirm/cancel, list batches for pick)
 
 ## Hive
 
@@ -62,12 +74,16 @@ Each feature: `data` (repos, models), `domain` (entities, repo interfaces, use c
 | `products` | `ProductModel` | catalog |
 | `shop` | `ShopModel` | shop info on receipts |
 | `settings` | untyped | key-value; e.g. `printer_mac` for receipt auto-connect |
+| `warehouses` | `WarehouseModel` | warehouse master |
+| `stock_batches` | `StockBatchModel` | qty per product/warehouse/lot (import price, supplier, expiry) |
+| `stock_movements` | `StockMovementModel` | audit trail |
+| `invoices` | `InvoiceModel` | draft/confirmed/cancelled POS invoices + lines |
 
 ## Main flows
 
 1. **Catalog**: `ProductBloc` → `ProductRepository` → Hive `products` box.
 2. **Shop profile**: `ShopBloc` → `shop` box.
-3. **Billing**: Home uses scanner → `BillingBloc` `ScanBarcodeEvent` → `GetProductByBarcodeUseCase` → add line to cart; checkout → `PrintReceiptEvent` → `PrinterHelper` + `PrinterBloc` state / paired device.
+3. **Billing / invoice lifecycle**: Scanner → draft invoice + pick batch when needed → line updates → checkout **confirm** runs `ConfirmInvoiceUseCase` (stock deduction) → `PrintReceiptEvent` uses persisted invoice lines; `PrinterHelper` + paired device from settings.
 4. **Printer**: `PrinterBloc` + `PrinterRepository`; hardware via `print_bluetooth_thermal`.
 
 ## Conventions
