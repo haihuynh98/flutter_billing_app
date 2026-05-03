@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../bloc/product_bloc.dart';
-import '../../domain/entities/product.dart';
+
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/app_validators.dart';
+import '../../../stock/presentation/bloc/stock_bloc.dart';
+import '../../domain/entities/product.dart';
+import '../bloc/product_bloc.dart';
 
 class ProductListPage extends StatefulWidget {
   const ProductListPage({super.key});
@@ -41,10 +43,17 @@ class _ProductListPageState extends State<ProductListPage> {
       if (matchedProduct != null) {
         _searchController.text = matchedProduct.name;
       } else {
-        _searchController.text =
-            barcode; // If not found, just put barcode in search
+        _searchController.text = barcode;
       }
     }
+  }
+
+  void _refreshStockTotals(List<Product> products) {
+    if (products.isEmpty) return;
+    context.read<StockBloc>().add(
+          LoadTotalStockMapEvent(products.map((e) => e.id).toList()),
+        );
+    context.read<StockBloc>().add(const LoadExpiringProductIdsEvent());
   }
 
   @override
@@ -66,7 +75,6 @@ class _ProductListPageState extends State<ProductListPage> {
       ),
       body: Column(
         children: [
-          // Search Bar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: BlocBuilder<ProductBloc, ProductState>(
@@ -113,138 +121,190 @@ class _ProductListPageState extends State<ProductListPage> {
               );
             }),
           ),
-
           Expanded(
-            child: BlocConsumer<ProductBloc, ProductState>(
+            child: BlocListener<ProductBloc, ProductState>(
+              listenWhen: (p, c) =>
+                  c.products != p.products && c.products.isNotEmpty,
               listener: (context, state) {
-                if (state.status == ProductStatus.success &&
-                    state.message != null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text(state.message!),
-                        backgroundColor: Colors.green),
-                  );
-                } else if (state.status == ProductStatus.error &&
-                    state.message != null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text(state.message!),
-                        backgroundColor: Colors.red),
-                  );
-                }
+                _refreshStockTotals(state.products);
               },
-              builder: (context, state) {
-                if (state.status == ProductStatus.loading &&
-                    state.products.isEmpty) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (state.products.isEmpty) {
-                  if (state.status == ProductStatus.error) {
-                    return Center(child: Text('Lỗi: ${state.message}'));
-                  }
-                  return const Center(
-                      child: Text('Không tìm thấy sản phẩm. Hãy thêm mới!'));
-                }
-
-                final filteredProducts = state.products
-                    .where((product) =>
-                        product.name.toLowerCase().contains(_searchQuery) ||
-                        product.barcode.toLowerCase().contains(_searchQuery))
-                    .toList();
-
-                if (filteredProducts.isEmpty) {
-                  return const Center(
-                      child: Text('Không có sản phẩm phù hợp với từ khóa tìm kiếm.'));
-                }
-
-                return ListView.separated(
-                  padding: const EdgeInsets.only(
-                      left: 16, right: 16, top: 8, bottom: 100),
-                  itemCount: filteredProducts.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final product = filteredProducts[index];
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: borderColor),
-                        boxShadow: const [
-                          BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 4,
-                              offset: Offset(0, 2))
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  product.name,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 16),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '₹${product.price.toStringAsFixed(2)}',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.grey[600]),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primaryColor
-                                      .withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: IconButton(
-                                  icon: const Icon(Icons.edit_rounded,
-                                      color: AppTheme.primaryColor, size: 20),
-                                  constraints: const BoxConstraints(),
-                                  padding: const EdgeInsets.all(8),
-                                  onPressed: () {
-                                    context.push('/products/edit/${product.id}',
-                                        extra: product);
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.red.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: IconButton(
-                                  icon: const Icon(Icons.delete_outline_rounded,
-                                      color: Colors.red, size: 20),
-                                  constraints: const BoxConstraints(),
-                                  padding: const EdgeInsets.all(8),
-                                  onPressed: () =>
-                                      _confirmDelete(context, product),
-                                ),
-                              ),
-                            ],
-                          )
-                        ],
-                      ),
+              child: BlocConsumer<ProductBloc, ProductState>(
+                listener: (context, state) {
+                  if (state.status == ProductStatus.success &&
+                      state.message != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content: Text(state.message!),
+                          backgroundColor: Colors.green),
                     );
-                  },
-                );
-              },
+                  } else if (state.status == ProductStatus.error &&
+                      state.message != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content: Text(state.message!),
+                          backgroundColor: Colors.red),
+                    );
+                  }
+                  if (state.status == ProductStatus.loaded &&
+                      state.products.isNotEmpty) {
+                    _refreshStockTotals(state.products);
+                  }
+                },
+                builder: (context, state) {
+                  if (state.status == ProductStatus.loading &&
+                      state.products.isEmpty) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (state.products.isEmpty) {
+                    if (state.status == ProductStatus.error) {
+                      return Center(child: Text('Lỗi: ${state.message}'));
+                    }
+                    return const Center(
+                        child: Text('Không tìm thấy sản phẩm. Hãy thêm mới!'));
+                  }
+
+                  final filteredProducts = state.products
+                      .where((product) =>
+                          product.name.toLowerCase().contains(_searchQuery) ||
+                          product.barcode
+                              .toLowerCase()
+                              .contains(_searchQuery))
+                      .toList();
+
+                  if (filteredProducts.isEmpty) {
+                    return const Center(
+                        child: Text(
+                            'Không có sản phẩm phù hợp với từ khóa tìm kiếm.'));
+                  }
+
+                  return BlocBuilder<StockBloc, StockState>(
+                    builder: (context, stockState) {
+                      return ListView.separated(
+                        padding: const EdgeInsets.only(
+                            left: 16, right: 16, top: 8, bottom: 100),
+                        itemCount: filteredProducts.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final product = filteredProducts[index];
+                          final total =
+                              stockState.totalStockMap[product.id] ?? 0;
+                          final expiring = stockState.expiringProductIds
+                              .contains(product.id);
+                          return Material(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () => context.push(
+                                '/products/${product.id}/stock',
+                              ),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: borderColor),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                        color: Colors.black12,
+                                        blurRadius: 4,
+                                        offset: Offset(0, 2))
+                                  ],
+                                ),
+                                padding: const EdgeInsets.all(16),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  product.name,
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 16),
+                                                ),
+                                              ),
+                                              if (expiring)
+                                                Container(
+                                                  width: 10,
+                                                  height: 10,
+                                                  margin: const EdgeInsets.only(
+                                                      left: 4),
+                                                  decoration: const BoxDecoration(
+                                                    color: Colors.red,
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '₹${product.price.toStringAsFixed(2)}',
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.w500,
+                                                color: Colors.grey[600]),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Tồn kho: $total',
+                                            style: const TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
+                                                color: AppTheme.primaryColor),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Column(
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(Icons.inventory_2,
+                                              color: AppTheme.primaryColor,
+                                              size: 22),
+                                          tooltip: 'Nhập kho',
+                                          onPressed: () => context.push(
+                                            '/products/${product.id}/import',
+                                            extra: product,
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.edit_rounded,
+                                              color: AppTheme.primaryColor,
+                                              size: 22),
+                                          onPressed: () {
+                                            context.push(
+                                                '/products/edit/${product.id}',
+                                                extra: product);
+                                          },
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(
+                                              Icons.delete_outline_rounded,
+                                              color: Colors.red,
+                                              size: 22),
+                                          onPressed: () =>
+                                              _confirmDelete(context, product),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ),
         ],

@@ -109,6 +109,20 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 _buildDivider(),
                 _buildListItem(
+                  icon: Icons.warehouse,
+                  title: 'Quản lý kho',
+                  subtitle: 'Tạo, chỉnh sửa và xóa kho hàng',
+                  onTap: () => context.push('/warehouses'),
+                ),
+                _buildDivider(),
+                _buildListItem(
+                  icon: Icons.receipt_long,
+                  title: 'Lịch sử hóa đơn',
+                  subtitle: 'Đơn đang thực hiện và đã xác nhận',
+                  onTap: () => context.push('/invoices'),
+                ),
+                _buildDivider(),
+                _buildListItem(
                   icon: Icons.storefront,
                   title: 'Thông tin cửa hàng',
                   subtitle: 'Sửa thông tin kinh doanh và địa chỉ',

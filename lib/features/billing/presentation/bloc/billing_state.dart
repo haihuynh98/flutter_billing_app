@@ -1,35 +1,97 @@
 part of 'billing_bloc.dart';
 
 class BillingState extends Equatable {
-  final List<CartItem> cartItems;
+  final Invoice? currentInvoice;
+  final Product? pendingProduct;
+  final List<StockBatch> pendingSources;
   final String? error;
   final bool isPrinting;
   final bool printSuccess;
+  final bool isConfirming;
+  final bool confirmSuccess;
 
   const BillingState({
-    this.cartItems = const [],
+    this.currentInvoice,
+    this.pendingProduct,
+    this.pendingSources = const [],
     this.error,
     this.isPrinting = false,
     this.printSuccess = false,
+    this.isConfirming = false,
+    this.confirmSuccess = false,
   });
 
-  double get totalAmount => cartItems.fold(0, (sum, item) => sum + item.total);
+  List<InvoiceItem> get cartItems => currentInvoice?.items ?? [];
+
+  double get totalAmount => currentInvoice?.total ?? 0;
+
+  bool get needsSourcePick =>
+      pendingProduct != null && pendingSources.isNotEmpty;
 
   BillingState copyWith({
-    List<CartItem>? cartItems,
+    Invoice? currentInvoice,
+    bool clearInvoice = false,
+    Product? pendingProduct,
+    bool clearPendingProduct = false,
+    List<StockBatch>? pendingSources,
     String? error,
     bool clearError = false,
     bool? isPrinting,
     bool? printSuccess,
+    bool? isConfirming,
+    bool? confirmSuccess,
+    bool clearConfirmSuccess = false,
   }) {
     return BillingState(
-      cartItems: cartItems ?? this.cartItems,
+      currentInvoice:
+          clearInvoice ? null : (currentInvoice ?? this.currentInvoice),
+      pendingProduct: clearPendingProduct
+          ? null
+          : (pendingProduct ?? this.pendingProduct),
+      pendingSources: clearPendingProduct
+          ? const []
+          : (pendingSources ?? this.pendingSources),
       error: clearError ? null : (error ?? this.error),
       isPrinting: isPrinting ?? this.isPrinting,
       printSuccess: printSuccess ?? this.printSuccess,
+      isConfirming: isConfirming ?? this.isConfirming,
+      confirmSuccess: clearConfirmSuccess
+          ? false
+          : (confirmSuccess ?? this.confirmSuccess),
     );
   }
 
+  BillingState clearInvoice() => BillingState(
+        currentInvoice: null,
+        pendingProduct: null,
+        pendingSources: const [],
+        error: error,
+        isPrinting: isPrinting,
+        printSuccess: printSuccess,
+        isConfirming: isConfirming,
+        confirmSuccess: confirmSuccess,
+      );
+
+  BillingState clearPending() => BillingState(
+        currentInvoice: currentInvoice,
+        pendingProduct: null,
+        pendingSources: const [],
+        error: error,
+        isPrinting: isPrinting,
+        printSuccess: printSuccess,
+        isConfirming: isConfirming,
+        confirmSuccess: confirmSuccess,
+      );
+
   @override
-  List<Object?> get props => [cartItems, error, isPrinting, printSuccess];
+  List<Object?> get props => [
+        currentInvoice,
+        pendingProduct,
+        pendingSources,
+        error,
+        isPrinting,
+        printSuccess,
+        isConfirming,
+        confirmSuccess,
+      ];
 }

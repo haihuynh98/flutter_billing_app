@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:vibration/vibration.dart';
+import 'package:intl/intl.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:vibration/vibration.dart';
 
-import '../../../billing/presentation/bloc/billing_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/primary_button.dart';
-import '../../domain/entities/cart_item.dart';
+import '../../../invoice/domain/entities/invoice_item.dart';
+import '../../../product/domain/entities/product.dart';
+import '../../../stock/domain/entities/stock_batch.dart';
+import '../../../invoice/domain/entities/invoice_status.dart';
+import '../../../warehouse/domain/entities/warehouse.dart';
+import '../../../warehouse/presentation/bloc/warehouse_bloc.dart';
+import '../bloc/billing_bloc.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -24,8 +30,6 @@ class _HomePageState extends State<HomePage> {
 
   bool _isCameraOn = true;
   bool _isFlashOn = false;
-
-  // Cooldown mapping to prevent rapid firing of the same barcode
   final Map<String, DateTime> _lastScanTimes = {};
 
   @override
@@ -42,7 +46,6 @@ class _HomePageState extends State<HomePage> {
       if (barcode.rawValue != null) {
         final rawValue = barcode.rawValue!;
 
-        // Cooldown logic: 2 seconds per identical barcode
         if (_lastScanTimes.containsKey(rawValue)) {
           final lastScan = _lastScanTimes[rawValue]!;
           if (now.difference(lastScan).inSeconds < 2) {
@@ -52,7 +55,6 @@ class _HomePageState extends State<HomePage> {
 
         _lastScanTimes[rawValue] = now;
 
-        // Vibrate
         final hasVibrator = await Vibration.hasVibrator();
         if (hasVibrator == true) {
           Vibration.vibrate();
@@ -61,31 +63,155 @@ class _HomePageState extends State<HomePage> {
         if (mounted) {
           context.read<BillingBloc>().add(ScanBarcodeEvent(rawValue));
         }
-        break; // Process one barcode at a time per frame
+        break;
       }
     }
+  }
+
+  String _warehouseName(String id, List<Warehouse> warehouses) {
+    try {
+      return warehouses.firstWhere((w) => w.id == id).name;
+    } catch (_) {
+      return id;
+    }
+  }
+
+  Future<void> _maybeShowSourceSheet(BillingState state) async {
+    if (!state.needsSourcePick) return;
+    final product = state.pendingProduct!;
+    final df = DateFormat('dd/MM/yyyy');
+    if (!mounted) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        final warehouses = context.watch<WarehouseBloc>().state.warehouses;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Chọn lô xuất · ${product.name}',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 12),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: state.pendingSources.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, i) {
+                      final b = state.pendingSources[i];
+                      final wName = _warehouseName(b.warehouseId, warehouses);
+                      final hsd = b.expiryDate != null
+                          ? ' · HSD ${df.format(b.expiryDate!)}'
+                          : '';
+                      final ncc = (b.supplierName != null &&
+                              b.supplierName!.isNotEmpty)
+                          ? ' · NCC ${b.supplierName}'
+                          : '';
+                      return ListTile(
+                        title: Text(
+                            '$wName · Nhập ${df.format(b.importDate)}$ncc'),
+                        subtitle: Text(
+                            'Còn ${b.quantity}$hsd',
+                            style: TextStyle(
+                                color: b.isExpired || b.isExpiringSoon
+                                    ? Colors.red
+                                    : null)),
+                        onTap: () async {
+                          if (b.isExpired) {
+                            final ok = await showDialog<bool>(
+                              context: context,
+                              builder: (dCtx) => AlertDialog(
+                                title: const Text('Lô đã hết hạn'),
+                                content: const Text(
+                                    'Lô này đã hết hạn. Vẫn dùng để bán?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(dCtx, false),
+                                    child: const Text('Hủy'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(dCtx, true),
+                                    child: const Text('Tiếp tục'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (ok != true) return;
+                          }
+                          if (!ctx.mounted) return;
+                          Navigator.pop(ctx);
+                          if (!mounted) return;
+                          context.read<BillingBloc>().add(
+                                PickSourceEvent(product: product, batch: b),
+                              );
+                        },
+                      );
+                    },
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    context
+                        .read<BillingBloc>()
+                        .add(const ClearPendingPickEvent());
+                  },
+                  child: const Text('Hủy'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocListener<BillingBloc, BillingState>(
-        listenWhen: (previous, current) =>
-            previous.error != current.error && current.error != null,
-        listener: (context, state) {
-          if (state.error != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.error!),
-                backgroundColor: Colors.red,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          }
-        },
+      body: MultiBlocListener(
+        listeners: [
+          BlocListener<BillingBloc, BillingState>(
+            listenWhen: (previous, current) =>
+                previous.error != current.error && current.error != null,
+            listener: (context, state) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.error!),
+                  backgroundColor: Colors.red,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+          ),
+          BlocListener<BillingBloc, BillingState>(
+            listenWhen: (p, c) {
+              String? key(Product? prod, List<StockBatch> batches) {
+                if (prod == null || batches.isEmpty) return null;
+                return '${prod.id}:${batches.map((b) => b.id).join(',')}';
+              }
+
+              return key(c.pendingProduct, c.pendingSources) !=
+                  key(p.pendingProduct, p.pendingSources);
+            },
+            listener: (context, state) {
+              if (!state.needsSourcePick) return;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (context.mounted) _maybeShowSourceSheet(state);
+              });
+            },
+          ),
+        ],
         child: Stack(
           children: [
-            // SCANNER VIEW (TOP 50%)
             Positioned(
               top: 0,
               left: 0,
@@ -93,10 +219,8 @@ class _HomePageState extends State<HomePage> {
               height: MediaQuery.of(context).size.height * 0.4,
               child: _buildScannerSection(),
             ),
-
-            // BOTTOM PANEL (BOTTOM 50% + OVERLAP)
             Positioned(
-              top: (MediaQuery.of(context).size.height * 0.4) - 24, // overlap
+              top: (MediaQuery.of(context).size.height * 0.4) - 24,
               left: 0,
               right: 0,
               bottom: 0,
@@ -133,13 +257,20 @@ class _HomePageState extends State<HomePage> {
             onDetect: _onDetect,
           ),
           if (!_isCameraOn) _buildCameraOffState(),
-
-          // Overlay Actions (Top Right)
           Positioned(
             top: MediaQuery.of(context).padding.top + 16,
             right: 16,
             child: Column(
               children: [
+                _buildOverlayButton(
+                  icon: Icons.receipt_long,
+                  onPressed: () async {
+                    _scannerController.stop();
+                    await context.push('/invoices');
+                    if (_isCameraOn && mounted) _scannerController.start();
+                  },
+                ),
+                const SizedBox(height: 16),
                 _buildOverlayButton(
                   icon: Icons.settings,
                   onPressed: () async {
@@ -161,7 +292,6 @@ class _HomePageState extends State<HomePage> {
                 if (_isCameraOn) const SizedBox(height: 16),
                 _buildOverlayButton(
                   icon: _isCameraOn ? Icons.videocam : Icons.videocam_off,
-                  // color:  Colors.white24 ,
                   onPressed: () {
                     setState(() {
                       _isCameraOn = !_isCameraOn;
@@ -176,8 +306,6 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
-
-          // Central Overlay Bounding Box
           if (_isCameraOn)
             Center(
               child: Container(
@@ -189,7 +317,6 @@ class _HomePageState extends State<HomePage> {
                 ),
                 child: Stack(
                   children: [
-                    // Corners
                     _buildCorner(Alignment.topLeft),
                     _buildCorner(Alignment.topRight),
                     _buildCorner(Alignment.bottomLeft),
@@ -205,7 +332,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildCameraOffState() {
     return Container(
-      color: const Color(0xFF1E293B), // slate-800
+      color: const Color(0xFF1E293B),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -213,7 +340,7 @@ class _HomePageState extends State<HomePage> {
             width: 64,
             height: 64,
             decoration: const BoxDecoration(
-              color: Color(0xFF334155), // slate-700
+              color: Color(0xFF334155),
               shape: BoxShape.circle,
             ),
             alignment: Alignment.center,
@@ -317,7 +444,6 @@ class _HomePageState extends State<HomePage> {
       ),
       child: Column(
         children: [
-          // Drag handle indicator
           Container(
             width: 48,
             height: 4,
@@ -327,12 +453,16 @@ class _HomePageState extends State<HomePage> {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-
-          // Header
           BlocBuilder<BillingBloc, BillingState>(
             builder: (context, state) {
               final totalItems =
                   state.cartItems.fold<int>(0, (sum, i) => sum + i.quantity);
+              final inv = state.currentInvoice;
+              final subtitle = inv != null && inv.status == InvoiceStatus.draft
+                  ? 'Đơn #${inv.id.substring(0, 8)}'
+                  : (inv != null && inv.status == InvoiceStatus.confirmed
+                      ? 'Đã xác nhận'
+                      : 'Sản phẩm đã quét');
               return Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -342,8 +472,8 @@ class _HomePageState extends State<HomePage> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Sản phẩm đã quét',
-                            style: TextStyle(
+                        Text(subtitle,
+                            style: const TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.w600)),
                         Text('Tổng $totalItems sản phẩm',
                             style: const TextStyle(
@@ -374,30 +504,33 @@ class _HomePageState extends State<HomePage> {
             },
           ),
           const Divider(height: 1),
-
-          // List View
           Expanded(
-            child: Stack(children: [
-              BlocBuilder<BillingBloc, BillingState>(
-                builder: (context, state) {
-                  if (state.cartItems.isEmpty) {
-                    return _buildEmptyCart();
-                  }
-
-                  return ListView.separated(
-                    padding: const EdgeInsets.only(
-                        left: 15, right: 15, top: 16, bottom: 100),
-                    itemCount: state.cartItems.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final item = state.cartItems[index];
-                      return _buildCartItemCard(context, item);
-                    },
-                  );
-                },
-              ),
-            ]),
+            child: BlocBuilder<BillingBloc, BillingState>(
+              builder: (context, state) {
+                if (state.cartItems.isEmpty) {
+                  return _buildEmptyCart();
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.only(
+                      left: 15, right: 15, top: 16, bottom: 100),
+                  itemCount: state.cartItems.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final item = state.cartItems[index];
+                    return BlocBuilder<WarehouseBloc, WarehouseState>(
+                      builder: (context, whState) {
+                        return _buildCartItemCard(
+                          context,
+                          item,
+                          whState.warehouses,
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -439,8 +572,16 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildCartItemCard(
     BuildContext context,
-    CartItem item,
+    InvoiceItem item,
+    List<Warehouse> warehouses,
   ) {
+    String wName;
+    try {
+      wName = warehouses.firstWhere((w) => w.id == item.sourceWarehouseId).name;
+    } catch (_) {
+      wName = item.sourceWarehouseId;
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -453,14 +594,13 @@ class _HomePageState extends State<HomePage> {
       padding: const EdgeInsets.all(16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        spacing: 1,
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.product.name,
+                  item.productName,
                   style: const TextStyle(
                       fontWeight: FontWeight.w600, fontSize: 14),
                   maxLines: 2,
@@ -468,10 +608,10 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '₹${item.product.price.toStringAsFixed(2)}',
+                  '₹${item.price.toStringAsFixed(2)} · $wName · lô ${item.sourceBatchId.substring(0, 6)}',
                   style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 11,
                       color: Colors.grey[600]),
                 ),
               ],
@@ -491,11 +631,17 @@ class _HomePageState extends State<HomePage> {
                     onPressed: () {
                       if (item.quantity > 1) {
                         context.read<BillingBloc>().add(UpdateQuantityEvent(
-                            item.product.id, item.quantity - 1));
+                              item.productId,
+                              item.sourceBatchId,
+                              item.quantity - 1,
+                            ));
                       } else {
-                        context
-                            .read<BillingBloc>()
-                            .add(RemoveProductFromCartEvent(item.product.id));
+                        context.read<BillingBloc>().add(
+                              RemoveProductFromCartEvent(
+                                item.productId,
+                                item.sourceBatchId,
+                              ),
+                            );
                       }
                     }),
                 SizedBox(
@@ -510,7 +656,10 @@ class _HomePageState extends State<HomePage> {
                     icon: Icons.add,
                     onPressed: () {
                       context.read<BillingBloc>().add(UpdateQuantityEvent(
-                          item.product.id, item.quantity + 1));
+                            item.productId,
+                            item.sourceBatchId,
+                            item.quantity + 1,
+                          ));
                     }),
               ],
             ),
@@ -531,7 +680,4 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-  // A floating Details/Checkout Button at the very bottom
-  // Added a Stack wrapper below to overlay this button
 }
