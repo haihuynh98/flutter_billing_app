@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/money_format.dart';
 import '../../../product/domain/entities/product.dart';
 import '../../../product/presentation/bloc/product_bloc.dart';
 import '../../../stock/domain/entities/stock_batch.dart';
@@ -119,7 +120,7 @@ class _ProductStockPageState extends State<ProductStockPage> {
                       title: Text(
                           '${m.type.name} · ${m.quantityDelta > 0 ? '+' : ''}${m.quantityDelta}'),
                       subtitle: Text(
-                        '${df.format(m.timestamp)} · ${m.unitImportPrice != null ? 'Giá nhập ₹${m.unitImportPrice!.toStringAsFixed(2)}' : ''} ${m.supplierName != null ? '· NCC ${m.supplierName}' : ''}',
+                        '${df.format(m.timestamp)} · ${m.unitImportPrice != null ? 'Giá nhập ${formatMoney(m.unitImportPrice!)}' : ''} ${m.supplierName != null ? '· NCC ${m.supplierName}' : ''}',
                         maxLines: 2,
                       ),
                     );
@@ -186,7 +187,7 @@ class _BatchCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Nhập ${df.format(batch.importDate)} · Giá ₹${batch.importPrice.toStringAsFixed(2)} · Còn ${batch.quantity}',
+              'Nhập ${df.format(batch.importDate)} · Giá ${formatMoney(batch.importPrice)} · Còn ${batch.quantity}',
               style: TextStyle(fontSize: 13, color: fg),
             ),
             if (hsdLine != null) ...[

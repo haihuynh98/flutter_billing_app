@@ -7,6 +7,12 @@ class Shop extends Equatable {
   final String phoneNumber;
   final String upiId;
   final String footerText;
+  final String invoiceTitle;
+  final String invoiceCodePrefix;
+  final String sellerLabel;
+  final String buyerLabel;
+  final String signatureNote;
+  final String logoImagePath;
 
   const Shop({
     this.name = '',
@@ -15,6 +21,12 @@ class Shop extends Equatable {
     this.phoneNumber = '',
     this.upiId = '',
     this.footerText = '',
+    this.invoiceTitle = 'HÓA ĐƠN BÁN HÀNG',
+    this.invoiceCodePrefix = 'HD',
+    this.sellerLabel = 'Người bán hàng',
+    this.buyerLabel = 'Người mua hàng',
+    this.signatureNote = '(Ký, ghi rõ họ tên)',
+    this.logoImagePath = '',
   });
 
   Shop copyWith({
@@ -24,6 +36,12 @@ class Shop extends Equatable {
     String? phoneNumber,
     String? upiId,
     String? footerText,
+    String? invoiceTitle,
+    String? invoiceCodePrefix,
+    String? sellerLabel,
+    String? buyerLabel,
+    String? signatureNote,
+    String? logoImagePath,
   }) {
     return Shop(
       name: name ?? this.name,
@@ -32,10 +50,28 @@ class Shop extends Equatable {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       upiId: upiId ?? this.upiId,
       footerText: footerText ?? this.footerText,
+      invoiceTitle: invoiceTitle ?? this.invoiceTitle,
+      invoiceCodePrefix: invoiceCodePrefix ?? this.invoiceCodePrefix,
+      sellerLabel: sellerLabel ?? this.sellerLabel,
+      buyerLabel: buyerLabel ?? this.buyerLabel,
+      signatureNote: signatureNote ?? this.signatureNote,
+      logoImagePath: logoImagePath ?? this.logoImagePath,
     );
   }
 
   @override
-  List<Object?> get props =>
-      [name, addressLine1, addressLine2, phoneNumber, upiId, footerText];
+  List<Object?> get props => [
+        name,
+        addressLine1,
+        addressLine2,
+        phoneNumber,
+        upiId,
+        footerText,
+        invoiceTitle,
+        invoiceCodePrefix,
+        sellerLabel,
+        buyerLabel,
+        signatureNote,
+        logoImagePath,
+      ];
 }

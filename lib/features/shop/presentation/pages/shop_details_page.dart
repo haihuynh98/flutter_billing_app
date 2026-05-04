@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:billing_app/core/widgets/input_label.dart';
 import 'package:billing_app/core/widgets/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../domain/entities/shop.dart';
 import '../bloc/shop_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -23,6 +26,12 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
   late TextEditingController _phoneController;
   late TextEditingController _upiController;
   late TextEditingController _footerController;
+  late TextEditingController _invoiceTitleController;
+  late TextEditingController _invoiceCodePrefixController;
+  late TextEditingController _sellerLabelController;
+  late TextEditingController _buyerLabelController;
+  late TextEditingController _signatureNoteController;
+  String _logoImagePath = '';
 
   @override
   void initState() {
@@ -33,6 +42,11 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
     _phoneController = TextEditingController();
     _upiController = TextEditingController();
     _footerController = TextEditingController();
+    _invoiceTitleController = TextEditingController();
+    _invoiceCodePrefixController = TextEditingController();
+    _sellerLabelController = TextEditingController();
+    _buyerLabelController = TextEditingController();
+    _signatureNoteController = TextEditingController();
 
     // Load shop data
     context.read<ShopBloc>().add(LoadShopEvent());
@@ -46,6 +60,14 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       _phoneController.text = shop.phoneNumber;
       _upiController.text = shop.upiId;
       _footerController.text = shop.footerText;
+      _invoiceTitleController.text = shop.invoiceTitle;
+      _invoiceCodePrefixController.text = shop.invoiceCodePrefix;
+      _sellerLabelController.text = shop.sellerLabel;
+      _buyerLabelController.text = shop.buyerLabel;
+      _signatureNoteController.text = shop.signatureNote;
+      setState(() {
+        _logoImagePath = shop.logoImagePath;
+      });
     }
   }
 
@@ -57,6 +79,11 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
     _phoneController.dispose();
     _upiController.dispose();
     _footerController.dispose();
+    _invoiceTitleController.dispose();
+    _invoiceCodePrefixController.dispose();
+    _sellerLabelController.dispose();
+    _buyerLabelController.dispose();
+    _signatureNoteController.dispose();
     super.dispose();
   }
 
@@ -69,6 +96,12 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
         phoneNumber: _phoneController.text,
         upiId: _upiController.text,
         footerText: _footerController.text,
+        invoiceTitle: _invoiceTitleController.text,
+        invoiceCodePrefix: _invoiceCodePrefixController.text,
+        sellerLabel: _sellerLabelController.text,
+        buyerLabel: _buyerLabelController.text,
+        signatureNote: _signatureNoteController.text,
+        logoImagePath: _logoImagePath,
       );
 
       context.read<ShopBloc>().add(UpdateShopEvent(shop));
@@ -173,6 +206,99 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                       maxLines: 2,
                       maxLength: 60,
                     ),
+                    const SizedBox(height: 24),
+                    Text('Mẫu hóa đơn',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                          color: AppTheme.primaryColor.withValues(alpha: 0.8),
+                        )),
+                    const SizedBox(height: 5),
+                    Text(
+                      'Các trường dưới đây giúp định dạng bill in/ảnh theo mẫu của bạn.',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                    ),
+                    const SizedBox(height: 16),
+                    const InputLabel(text: 'Logo hóa đơn (tùy chọn)'),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _pickLogoImage,
+                            icon: const Icon(Icons.image_outlined),
+                            label: Text(
+                              _logoImagePath.isEmpty
+                                  ? 'Chọn ảnh logo'
+                                  : 'Đổi ảnh logo',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        if (_logoImagePath.isNotEmpty)
+                          TextButton(
+                            onPressed: () {
+                              setState(() => _logoImagePath = '');
+                            },
+                            child: const Text('Xóa'),
+                          ),
+                      ],
+                    ),
+                    if (_logoImagePath.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          File(_logoImagePath),
+                          height: 72,
+                          width: 72,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            height: 72,
+                            width: 72,
+                            alignment: Alignment.center,
+                            color: Colors.grey.shade200,
+                            child: const Icon(Icons.broken_image_outlined),
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 15),
+                    const InputLabel(text: 'Tiêu đề hóa đơn'),
+                    _buildTextField(
+                      controller: _invoiceTitleController,
+                      hint: 'HÓA ĐƠN BÁN HÀNG',
+                      validator: AppValidators.required('Bắt buộc'),
+                      textCapitalization: TextCapitalization.characters,
+                    ),
+                    const SizedBox(height: 15),
+                    const InputLabel(text: 'Tiền tố mã hóa đơn'),
+                    _buildTextField(
+                      controller: _invoiceCodePrefixController,
+                      hint: 'HD',
+                      maxLength: 10,
+                    ),
+                    const SizedBox(height: 15),
+                    const InputLabel(text: 'Nhãn chữ ký người bán'),
+                    _buildTextField(
+                      controller: _sellerLabelController,
+                      hint: 'Người bán hàng',
+                      validator: AppValidators.required('Bắt buộc'),
+                    ),
+                    const SizedBox(height: 15),
+                    const InputLabel(text: 'Nhãn chữ ký người mua'),
+                    _buildTextField(
+                      controller: _buyerLabelController,
+                      hint: 'Người mua hàng',
+                      validator: AppValidators.required('Bắt buộc'),
+                    ),
+                    const SizedBox(height: 15),
+                    const InputLabel(text: 'Ghi chú chữ ký'),
+                    _buildTextField(
+                      controller: _signatureNoteController,
+                      hint: '(Ký, ghi rõ họ tên)',
+                      validator: AppValidators.required('Bắt buộc'),
+                    ),
                   ],
                 ),
               ),
@@ -193,17 +319,29 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
     int maxLines = 1,
     int? maxLength,
     String? Function(String?)? validator,
+    TextCapitalization textCapitalization = TextCapitalization.words,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
       maxLength: maxLength,
-      textCapitalization: TextCapitalization.words,
+      textCapitalization: textCapitalization,
       validator: validator,
       decoration: InputDecoration(
         hintText: hint,
       ),
     );
+  }
+
+  Future<void> _pickLogoImage() async {
+    final XFile? file = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1200,
+      imageQuality: 90,
+    );
+    if (file == null) return;
+    if (!mounted) return;
+    setState(() => _logoImagePath = file.path);
   }
 }

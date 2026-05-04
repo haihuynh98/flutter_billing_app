@@ -1,18 +1,33 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:gal/gal.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
-import '../../../../core/utils/printer_helper.dart';
 import '../../../../core/data/hive_database.dart';
+import '../../../../core/utils/money_format.dart';
+import '../../../../core/utils/printer_helper.dart';
+import '../../../../core/widgets/primary_button.dart';
 import '../../../shop/presentation/bloc/shop_bloc.dart';
 import '../../domain/entities/invoice.dart';
 
-class InvoiceDetailPage extends StatelessWidget {
+class InvoiceDetailPage extends StatefulWidget {
   final Invoice invoice;
   const InvoiceDetailPage({super.key, required this.invoice});
 
-  Future<void> _print(BuildContext context) async {
+  @override
+  State<InvoiceDetailPage> createState() => _InvoiceDetailPageState();
+}
+
+class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
+  bool _isExportingReceiptImage = false;
+
+  Future<void> _print() async {
     final shopState = context.read<ShopBloc>().state;
     if (shopState is! ShopLoaded) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -28,7 +43,7 @@ class InvoiceDetailPage extends StatelessWidget {
       final mac = HiveDatabase.settingsBox.get('printer_mac');
       if (mac != null) {
         final ok = await helper.connect(mac);
-        if (!context.mounted) return;
+        if (!mounted) return;
         if (!ok) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -47,7 +62,7 @@ class InvoiceDetailPage extends StatelessWidget {
       }
     }
     try {
-      final items = invoice.items
+      final items = widget.invoice.items
           .map((item) => {
                 'name': item.productName,
                 'qty': item.quantity,
@@ -61,10 +76,19 @@ class InvoiceDetailPage extends StatelessWidget {
         address2: shop.addressLine2,
         phone: shop.phoneNumber,
         items: items,
-        total: invoice.total,
+        total: widget.invoice.total,
         footer: shop.footerText,
+        invoiceTitle: shop.invoiceTitle,
+        invoiceCodePrefix: shop.invoiceCodePrefix,
+        invoiceId: widget.invoice.id,
+        invoiceSequence: widget.invoice.sequenceNumber,
+        createdAt: widget.invoice.createdAt,
+        sellerLabel: shop.sellerLabel,
+        buyerLabel: shop.buyerLabel,
+        signatureNote: shop.signatureNote,
+        logoImagePath: shop.logoImagePath,
       );
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('In hóa đơn thành công'),
@@ -72,7 +96,7 @@ class InvoiceDetailPage extends StatelessWidget {
         );
       }
     } catch (e) {
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Lỗi in: $e'), backgroundColor: Colors.red),
         );
@@ -80,12 +104,96 @@ class InvoiceDetailPage extends StatelessWidget {
     }
   }
 
+  Future<void> _exportReceiptImage() async {
+    final shopState = context.read<ShopBloc>().state;
+    if (shopState is! ShopLoaded) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Chưa tải thông tin cửa hàng'),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
+
+    setState(() => _isExportingReceiptImage = true);
+    try {
+      final inv = widget.invoice;
+      final now = DateTime.now();
+      final Uint8List bytes = await PrinterHelper().buildReceiptImageBytes(
+        shopName: shopState.shop.name,
+        address1: shopState.shop.addressLine1,
+        address2: shopState.shop.addressLine2,
+        phone: shopState.shop.phoneNumber,
+        items: inv.items
+            .map((item) => {
+                  'name': item.productName,
+                  'qty': item.quantity.toString(),
+                  'price': formatMoney(item.price),
+                  'total': formatMoney(item.lineTotal),
+                })
+            .toList(),
+        total: inv.total,
+        footer: shopState.shop.footerText,
+        invoiceTitle: shopState.shop.invoiceTitle,
+        invoiceCodePrefix: shopState.shop.invoiceCodePrefix,
+        invoiceId: inv.id,
+        invoiceSequence: inv.sequenceNumber,
+        sellerLabel: shopState.shop.sellerLabel,
+        buyerLabel: shopState.shop.buyerLabel,
+        signatureNote: shopState.shop.signatureNote,
+        logoImagePath: shopState.shop.logoImagePath,
+        createdAt: inv.createdAt,
+      );
+
+      final bool hasAccess = await Gal.hasAccess(toAlbum: true);
+      if (!hasAccess) {
+        await Gal.requestAccess(toAlbum: true);
+      }
+      await Gal.putImageBytes(
+        bytes,
+        album: 'Tiger Retail',
+        name: 'bill_${DateFormat('yyyyMMdd_HHmmss').format(now)}',
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Đã lưu ảnh bill vào thư viện'),
+        backgroundColor: Colors.green,
+      ));
+
+      final Directory tempDir = await getTemporaryDirectory();
+      final String fileName =
+          'bill_${DateFormat('yyyyMMdd_HHmmss').format(now)}.png';
+      final File file = File('${tempDir.path}/$fileName');
+      await file.writeAsBytes(bytes);
+
+      if (!mounted) return;
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: 'Hóa đơn từ ${shopState.shop.name}',
+        subject: 'Bill ${DateFormat('dd/MM/yyyy HH:mm').format(now)}',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Xuất ảnh bill thất bại: $e'),
+        backgroundColor: Colors.red,
+      ));
+    } finally {
+      if (mounted) {
+        setState(() => _isExportingReceiptImage = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final df = DateFormat('dd/MM/yyyy HH:mm');
+    final inv = widget.invoice;
     return Scaffold(
       appBar: AppBar(
-        title: Text('Đơn #${invoice.id.substring(0, 8)}',
+        title: Text(
+            inv.sequenceNumber != null
+                ? 'Đơn #${inv.sequenceNumber}'
+                : 'Đơn #${inv.id.substring(0, 8)}',
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         centerTitle: true,
         leading: IconButton(
@@ -98,31 +206,48 @@ class InvoiceDetailPage extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           Text(
-            'Xác nhận: ${invoice.confirmedAt != null ? df.format(invoice.confirmedAt!) : '—'}',
+            'Xác nhận: ${inv.confirmedAt != null ? df.format(inv.confirmedAt!) : '—'}',
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 16),
-          ...invoice.items.map((i) => ListTile(
+          ...inv.items.map((i) => ListTile(
                 title: Text(i.productName),
-                subtitle: Text('${i.quantity} × ₹${i.price.toStringAsFixed(2)}'),
-                trailing: Text('₹${i.lineTotal.toStringAsFixed(2)}'),
+                subtitle: Text('${i.quantity} × ${formatMoney(i.price)}'),
+                trailing: Text(formatMoney(i.lineTotal)),
               )),
           const Divider(),
           ListTile(
-            title: const Text('Tổng cộng', style: TextStyle(fontWeight: FontWeight.bold)),
+            title: const Text('Tổng cộng',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             trailing: Text(
-              '₹${invoice.total.toStringAsFixed(2)}',
+              formatMoney(inv.total),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ),
         ],
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ElevatedButton.icon(
-          onPressed: () => _print(context),
-          icon: const Icon(Icons.print),
-          label: const Text('In lại'),
+      bottomNavigationBar: SafeArea(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: PrimaryButton(
+                outerPadding: const EdgeInsets.fromLTRB(16, 8, 6, 16),
+                onPressed: _print,
+                label: 'In lại',
+                icon: Icons.print,
+              ),
+            ),
+            Expanded(
+              child: PrimaryButton(
+                outerPadding: const EdgeInsets.fromLTRB(6, 8, 16, 16),
+                onPressed: _isExportingReceiptImage ? null : _exportReceiptImage,
+                label: 'Lưu & chia sẻ ảnh bill',
+                icon: Icons.image_outlined,
+                isLoading: _isExportingReceiptImage,
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -10,6 +10,7 @@ class PrimaryButton extends StatelessWidget {
   final bool isFullWidth;
   final TextStyle? textStyle;
   final bool isLoading;
+  final EdgeInsetsGeometry outerPadding;
 
   const PrimaryButton({
     super.key,
@@ -22,6 +23,7 @@ class PrimaryButton extends StatelessWidget {
     this.isFullWidth = true,
     this.textStyle,
     this.isLoading = false,
+    this.outerPadding = const EdgeInsets.all(24.0),
   });
 
   @override
@@ -40,7 +42,7 @@ class PrimaryButton extends StatelessWidget {
 
     if (icon != null) {
       return Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: outerPadding,
         child: ElevatedButton.icon(
           onPressed: isLoading ? null : onPressed,
           icon: isLoading
@@ -56,6 +58,9 @@ class PrimaryButton extends StatelessWidget {
           label: Text(
             label,
             style: textStyle,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
           style: style,
         ),
@@ -63,7 +68,7 @@ class PrimaryButton extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.all(24.0),
+      padding: outerPadding,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: style,
@@ -79,6 +84,9 @@ class PrimaryButton extends StatelessWidget {
             : Text(
                 label,
                 style: textStyle,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
       ),
     );

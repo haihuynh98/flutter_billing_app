@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/money_format.dart';
 import '../../../product/domain/entities/product.dart';
 import '../../../product/presentation/bloc/product_bloc.dart';
 import '../../../stock/domain/entities/stock_batch.dart';
@@ -78,7 +79,7 @@ class _WarehouseDetailPageState extends State<WarehouseDetailPage> {
                 ...entry.value.map((b) => Card(
                       child: ListTile(
                         title: Text(
-                            'Nhập ${df.format(b.importDate)} · Giá ₹${b.importPrice.toStringAsFixed(2)} · Còn ${b.quantity}'),
+                            'Nhập ${df.format(b.importDate)} · Giá ${formatMoney(b.importPrice)} · Còn ${b.quantity}'),
                         subtitle: Text(
                           b.supplierName == null || b.supplierName!.isEmpty
                               ? 'NCC: —'

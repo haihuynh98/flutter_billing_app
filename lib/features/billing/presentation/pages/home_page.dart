@@ -5,12 +5,13 @@ import 'package:intl/intl.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:vibration/vibration.dart';
 
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/money_format.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../invoice/domain/entities/invoice_item.dart';
 import '../../../product/domain/entities/product.dart';
 import '../../../stock/domain/entities/stock_batch.dart';
 import '../../../invoice/domain/entities/invoice_status.dart';
+import '../../../product/presentation/bloc/product_bloc.dart';
 import '../../../warehouse/domain/entities/warehouse.dart';
 import '../../../warehouse/presentation/bloc/warehouse_bloc.dart';
 import '../bloc/billing_bloc.dart';
@@ -28,14 +29,47 @@ class _HomePageState extends State<HomePage> {
     returnImage: false,
   );
 
-  bool _isCameraOn = true;
+  bool _isCameraOn = false;
   bool _isFlashOn = false;
   final Map<String, DateTime> _lastScanTimes = {};
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+
+  static const double _scannerFractionWhenOn = 0.4;
+  static const double _scannerFractionWhenOff = 0.18;
+
+  double _scannerSectionHeight(BuildContext context) {
+    final h = MediaQuery.sizeOf(context).height;
+    return _isCameraOn ? h * _scannerFractionWhenOn : h * _scannerFractionWhenOff;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _isCameraOn) return;
+      _scannerController.stop();
+    });
+  }
 
   @override
   void dispose() {
     _scannerController.dispose();
+    _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  List<Product> _productsMatchingQuery(String query, List<Product> products) {
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty) return const [];
+    return products
+        .where((p) {
+          final name = p.name.toLowerCase();
+          final code = p.barcode.toLowerCase();
+          return name.contains(q) || code.contains(q);
+        })
+        .toList();
   }
 
   void _onDetect(BarcodeCapture capture) async {
@@ -210,23 +244,28 @@ class _HomePageState extends State<HomePage> {
             },
           ),
         ],
-        child: Stack(
-          children: [
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: MediaQuery.of(context).size.height * 0.4,
-              child: _buildScannerSection(),
-            ),
-            Positioned(
-              top: (MediaQuery.of(context).size.height * 0.4) - 24,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: _buildBottomPanel(),
-            ),
-          ],
+        child: Builder(
+          builder: (context) {
+            final scannerH = _scannerSectionHeight(context);
+            return Stack(
+              children: [
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: scannerH,
+                  child: _buildScannerSection(),
+                ),
+                Positioned(
+                  top: scannerH - 24,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: _buildBottomPanel(),
+                ),
+              ],
+            );
+          },
         ),
       ),
       bottomSheet:
@@ -258,53 +297,9 @@ class _HomePageState extends State<HomePage> {
           ),
           if (!_isCameraOn) _buildCameraOffState(),
           Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
-            right: 16,
-            child: Column(
-              children: [
-                _buildOverlayButton(
-                  icon: Icons.receipt_long,
-                  onPressed: () async {
-                    _scannerController.stop();
-                    await context.push('/invoices');
-                    if (_isCameraOn && mounted) _scannerController.start();
-                  },
-                ),
-                const SizedBox(height: 16),
-                _buildOverlayButton(
-                  icon: Icons.settings,
-                  onPressed: () async {
-                    _scannerController.stop();
-                    await context.push('/settings');
-                    if (_isCameraOn && mounted) _scannerController.start();
-                  },
-                ),
-                const SizedBox(height: 16),
-                if (_isCameraOn)
-                  _buildOverlayButton(
-                    icon:
-                        _isFlashOn ? Icons.flashlight_off : Icons.flashlight_on,
-                    onPressed: () {
-                      setState(() => _isFlashOn = !_isFlashOn);
-                      _scannerController.toggleTorch();
-                    },
-                  ),
-                if (_isCameraOn) const SizedBox(height: 16),
-                _buildOverlayButton(
-                  icon: _isCameraOn ? Icons.videocam : Icons.videocam_off,
-                  onPressed: () {
-                    setState(() {
-                      _isCameraOn = !_isCameraOn;
-                    });
-                    if (_isCameraOn) {
-                      _scannerController.start();
-                    } else {
-                      _scannerController.stop();
-                    }
-                  },
-                ),
-              ],
-            ),
+            top: MediaQuery.of(context).padding.top + 8,
+            right: 8,
+            child: _isCameraOn ? _buildScannerOverlayColumn() : _buildScannerOverlayRow(),
           ),
           if (_isCameraOn)
             Center(
@@ -333,63 +328,140 @@ class _HomePageState extends State<HomePage> {
   Widget _buildCameraOffState() {
     return Container(
       color: const Color(0xFF1E293B),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      padding: const EdgeInsets.fromLTRB(
+          12, 8, 120, 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: const BoxDecoration(
+          const DecoratedBox(
+            decoration: BoxDecoration(
               color: Color(0xFF334155),
               shape: BoxShape.circle,
             ),
-            alignment: Alignment.center,
-            child:
-                const Icon(Icons.videocam_off, color: Colors.white, size: 32),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Camera đã tắt',
-            style: TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          const SizedBox(height: 8),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              'Bật camera để bắt đầu quét mã vạch và thêm sản phẩm tự động.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70, fontSize: 12),
+            child: SizedBox(
+              width: 44,
+              height: 44,
+              child: Icon(Icons.videocam_off, color: Colors.white, size: 22),
             ),
           ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Camera đã tắt',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Chạm biểu tượng camera góc phải để bật — hoặc thêm hàng bằng ô tìm kiếm bên dưới.',
+                  style: const TextStyle(color: Colors.white70, fontSize: 11),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-            icon: const Icon(Icons.videocam),
-            label: const Text('Bật camera',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            onPressed: () {
-              setState(() => _isCameraOn = true);
-              _scannerController.start();
-            },
-          )
+          ),
         ],
       ),
     );
   }
 
+  Widget _buildScannerOverlayColumn() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildOverlayButton(
+          icon: Icons.receipt_long,
+          onPressed: () async {
+            _scannerController.stop();
+            await context.push('/invoices');
+            if (_isCameraOn && mounted) _scannerController.start();
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildOverlayButton(
+          icon: Icons.settings,
+          onPressed: () async {
+            _scannerController.stop();
+            await context.push('/settings');
+            if (_isCameraOn && mounted) _scannerController.start();
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildOverlayButton(
+          icon: _isFlashOn ? Icons.flashlight_off : Icons.flashlight_on,
+          onPressed: () {
+            setState(() => _isFlashOn = !_isFlashOn);
+            _scannerController.toggleTorch();
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildOverlayButton(
+          icon: Icons.videocam_off,
+          onPressed: () {
+            setState(() => _isCameraOn = false);
+            _scannerController.stop();
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildScannerOverlayRow() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildOverlayButton(
+          icon: Icons.receipt_long,
+          stackVertically: false,
+          onPressed: () async {
+            _scannerController.stop();
+            await context.push('/invoices');
+            if (_isCameraOn && mounted) _scannerController.start();
+          },
+        ),
+        const SizedBox(width: 8),
+        _buildOverlayButton(
+          icon: Icons.settings,
+          stackVertically: false,
+          onPressed: () async {
+            _scannerController.stop();
+            await context.push('/settings');
+            if (_isCameraOn && mounted) _scannerController.start();
+          },
+        ),
+        const SizedBox(width: 8),
+        _buildOverlayButton(
+          icon: Icons.videocam,
+          stackVertically: false,
+          onPressed: () {
+            setState(() => _isCameraOn = true);
+            _scannerController.start();
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _buildOverlayButton(
-      {required IconData icon, required VoidCallback onPressed, Color? color}) {
+      {required IconData icon,
+      required VoidCallback onPressed,
+      Color? color,
+      bool stackVertically = true}) {
     return Container(
       width: 44,
       height: 44,
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: stackVertically
+          ? const EdgeInsets.only(bottom: 12)
+          : EdgeInsets.zero,
       decoration: BoxDecoration(
         color: color ?? Colors.black45,
         shape: BoxShape.circle,
@@ -453,16 +525,125 @@ class _HomePageState extends State<HomePage> {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: BlocBuilder<ProductBloc, ProductState>(
+              buildWhen: (prev, next) => prev.products != next.products,
+              builder: (context, productState) {
+                return RawAutocomplete<Product>(
+                  textEditingController: _searchController,
+                  focusNode: _searchFocusNode,
+                  displayStringForOption: (Product p) => p.name,
+                  optionsBuilder: (TextEditingValue value) {
+                    if (productState.products.isEmpty) {
+                      return const Iterable<Product>.empty();
+                    }
+                    return _productsMatchingQuery(value.text, productState.products)
+                        .take(40);
+                  },
+                  onSelected: (Product selection) {
+                    _searchController.clear();
+                    _searchFocusNode.unfocus();
+                    if (!context.mounted) return;
+                    context
+                        .read<BillingBloc>()
+                        .add(SelectProductForCartEvent(selection));
+                  },
+                  fieldViewBuilder: (
+                    BuildContext context,
+                    TextEditingController textEditingController,
+                    FocusNode focusNode,
+                    VoidCallback onFieldSubmitted,
+                  ) {
+                    return TextField(
+                      controller: textEditingController,
+                      focusNode: focusNode,
+                      textInputAction: TextInputAction.search,
+                      decoration: InputDecoration(
+                        hintText: productState.products.isEmpty
+                            ? 'Chưa có sản phẩm trong danh mục'
+                            : 'Gõ tên hoặc mã — chọn trong danh sách',
+                        prefixIcon: const Icon(Icons.search, size: 22),
+                        filled: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                      ),
+                      onSubmitted: (_) => onFieldSubmitted(),
+                    );
+                  },
+                  optionsViewBuilder: (
+                    BuildContext context,
+                    AutocompleteOnSelected<Product> onSelected,
+                    Iterable<Product> options,
+                  ) {
+                    final optionList = options.toList();
+                    if (optionList.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    final maxW = MediaQuery.sizeOf(context).width - 32;
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 6,
+                        borderRadius: BorderRadius.circular(12),
+                        clipBehavior: Clip.antiAlias,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: 280,
+                            maxWidth: maxW,
+                          ),
+                          child: ListView.separated(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            shrinkWrap: true,
+                            itemCount: optionList.length,
+                            separatorBuilder: (_, __) =>
+                                const Divider(height: 1),
+                            itemBuilder: (BuildContext context, int index) {
+                              final p = optionList[index];
+                              return ListTile(
+                                dense: true,
+                                title: Text(
+                                  p.name,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                subtitle: Text(
+                                  'Mã: ${p.barcode} · ${formatMoney(p.price)}',
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                                onTap: () => onSelected(p),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
           BlocBuilder<BillingBloc, BillingState>(
             builder: (context, state) {
               final totalItems =
                   state.cartItems.fold<int>(0, (sum, i) => sum + i.quantity);
               final inv = state.currentInvoice;
               final subtitle = inv != null && inv.status == InvoiceStatus.draft
-                  ? 'Đơn #${inv.id.substring(0, 8)}'
+                  ? (inv.sequenceNumber != null
+                      ? 'Đơn #${inv.sequenceNumber}'
+                      : 'Đơn #${inv.id.substring(0, 8)}')
                   : (inv != null && inv.status == InvoiceStatus.confirmed
-                      ? 'Đã xác nhận'
-                      : 'Sản phẩm đã quét');
+                      ? (inv.sequenceNumber != null
+                          ? 'Đã xác nhận · #${inv.sequenceNumber}'
+                          : 'Đã xác nhận')
+                      : 'Trong giỏ hàng');
               return Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -490,7 +671,7 @@ class _HomePageState extends State<HomePage> {
                                 color: Colors.grey,
                                 letterSpacing: 1.2)),
                         Text(
-                          '₹${state.totalAmount.toStringAsFixed(2)}',
+                          formatMoney(state.totalAmount),
                           style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w900,
@@ -560,7 +741,7 @@ class _HomePageState extends State<HomePage> {
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 40),
             child: Text(
-              'Sản phẩm đã quét sẽ hiển thị ở đây khi bạn quét bằng camera phía trên.',
+              'Quét mã bằng camera phía trên, hoặc gõ tên / mã vào ô tìm kiếm để thêm vào giỏ.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey, fontSize: 14),
             ),
@@ -608,7 +789,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '₹${item.price.toStringAsFixed(2)} · $wName · lô ${item.sourceBatchId.substring(0, 6)}',
+                  '${formatMoney(item.price)} · $wName · lô ${item.sourceBatchId.substring(0, 6)}',
                   style: TextStyle(
                       fontWeight: FontWeight.w500,
                       fontSize: 11,

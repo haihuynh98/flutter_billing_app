@@ -23,13 +23,21 @@ class ShopModelAdapter extends TypeAdapter<ShopModel> {
       phoneNumber: fields[3] as String,
       upiId: fields[4] as String,
       footerText: fields[5] as String,
+      invoiceTitle:
+          fields[6] == null ? 'HÓA ĐƠN BÁN HÀNG' : fields[6] as String,
+      invoiceCodePrefix: fields[7] == null ? 'HD' : fields[7] as String,
+      sellerLabel: fields[8] == null ? 'Người bán hàng' : fields[8] as String,
+      buyerLabel: fields[9] == null ? 'Người mua hàng' : fields[9] as String,
+      signatureNote:
+          fields[10] == null ? '(Ký, ghi rõ họ tên)' : fields[10] as String,
+      logoImagePath: fields[11] == null ? '' : fields[11] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, ShopModel obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -41,7 +49,19 @@ class ShopModelAdapter extends TypeAdapter<ShopModel> {
       ..writeByte(4)
       ..write(obj.upiId)
       ..writeByte(5)
-      ..write(obj.footerText);
+      ..write(obj.footerText)
+      ..writeByte(6)
+      ..write(obj.invoiceTitle)
+      ..writeByte(7)
+      ..write(obj.invoiceCodePrefix)
+      ..writeByte(8)
+      ..write(obj.sellerLabel)
+      ..writeByte(9)
+      ..write(obj.buyerLabel)
+      ..writeByte(10)
+      ..write(obj.signatureNote)
+      ..writeByte(11)
+      ..write(obj.logoImagePath);
   }
 
   @override

@@ -135,11 +135,6 @@ class _AddProductPageState extends State<AddProductPage> {
                         const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
                       hintText: '0.00',
-                      prefixText: '₹ ',
-                      prefixStyle: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black),
                     ),
                     validator: AppValidators.price,
                     onSaved: (value) => _price = double.parse(value!),

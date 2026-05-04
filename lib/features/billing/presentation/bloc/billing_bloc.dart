@@ -39,6 +39,7 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
     required this.listBatchesByProductUseCase,
   }) : super(const BillingState()) {
     on<ScanBarcodeEvent>(_onScanBarcode);
+    on<SelectProductForCartEvent>(_onSelectProductForCart);
     on<PickSourceEvent>(_onPickSource);
     on<ClearPendingPickEvent>(_onClearPendingPick);
     on<UpdateQuantityEvent>(_onUpdateQuantity);
@@ -55,6 +56,38 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
     return inv == null || inv.status != InvoiceStatus.draft;
   }
 
+  Future<void> _enqueueProductForCart(
+    Emitter<BillingState> emit,
+    Product product,
+  ) async {
+    final batchesResult = await listBatchesByProductUseCase(product.id);
+    await batchesResult.fold<Future<void>>(
+      (failure) async {
+        emit(state.copyWith(error: failure.message));
+      },
+      (batches) async {
+        final available = batches.where((b) => b.quantity > 0).toList();
+        if (available.isEmpty) {
+          emit(state.copyWith(
+              error: 'Sản phẩm ${product.name} không còn tồn kho'));
+          return;
+        }
+        if (available.length == 1 && !available.single.isExpired) {
+          await _addItem(
+            emit,
+            product: product,
+            batch: available.single,
+          );
+          return;
+        }
+        emit(state.copyWith(
+          pendingProduct: product,
+          pendingSources: available,
+        ));
+      },
+    );
+  }
+
   Future<void> _onScanBarcode(
       ScanBarcodeEvent event, Emitter<BillingState> emit) async {
     emit(state.copyWith(clearError: true, clearPendingProduct: true));
@@ -66,35 +99,15 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
             error: 'Không tìm thấy sản phẩm: ${event.barcode}'));
       },
       (product) async {
-        final batchesResult = await listBatchesByProductUseCase(product.id);
-        await batchesResult.fold<Future<void>>(
-          (failure) async {
-            emit(state.copyWith(error: failure.message));
-          },
-          (batches) async {
-            final available =
-                batches.where((b) => b.quantity > 0).toList();
-            if (available.isEmpty) {
-              emit(state.copyWith(
-                  error: 'Sản phẩm ${product.name} không còn tồn kho'));
-              return;
-            }
-            if (available.length == 1 && !available.single.isExpired) {
-              await _addItem(
-                emit,
-                product: product,
-                batch: available.single,
-              );
-              return;
-            }
-            emit(state.copyWith(
-              pendingProduct: product,
-              pendingSources: available,
-            ));
-          },
-        );
+        await _enqueueProductForCart(emit, product);
       },
     );
+  }
+
+  Future<void> _onSelectProductForCart(
+      SelectProductForCartEvent event, Emitter<BillingState> emit) async {
+    emit(state.copyWith(clearError: true, clearPendingProduct: true));
+    await _enqueueProductForCart(emit, event.product);
   }
 
   Future<void> _onPickSource(
@@ -312,7 +325,16 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
           phone: event.phone,
           items: items,
           total: inv.total,
-          footer: event.footer);
+          footer: event.footer,
+          invoiceTitle: event.invoiceTitle,
+          invoiceCodePrefix: event.invoiceCodePrefix,
+          invoiceId: inv.id,
+          invoiceSequence: inv.sequenceNumber,
+          createdAt: inv.createdAt,
+          sellerLabel: event.sellerLabel,
+          buyerLabel: event.buyerLabel,
+          signatureNote: event.signatureNote,
+          logoImagePath: event.logoImagePath);
 
       emit(state.copyWith(isPrinting: false, printSuccess: true));
     } catch (e) {

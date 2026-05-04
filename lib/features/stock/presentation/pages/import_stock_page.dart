@@ -91,7 +91,6 @@ class _QuickCreateProductDialogState extends State<_QuickCreateProductDialog> {
                     const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(
                   labelText: 'Giá bán',
-                  prefixText: '₹ ',
                 ),
                 validator: AppValidators.price,
               ),
@@ -448,7 +447,9 @@ class _ImportStockPageState extends State<ImportStockPage> {
                     initialValue: _importPrice.toStringAsFixed(2),
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(prefixText: '₹ '),
+                    decoration: const InputDecoration(
+                      hintText: '0.00',
+                    ),
                     validator: AppValidators.price,
                     onSaved: (v) => _importPrice = double.parse(v!),
                   ),

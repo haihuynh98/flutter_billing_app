@@ -13,6 +13,14 @@ class ScanBarcodeEvent extends BillingEvent {
   List<Object?> get props => [barcode];
 }
 
+/// Add by product reference (e.g. manual search); same stock / batch rules as [ScanBarcodeEvent].
+class SelectProductForCartEvent extends BillingEvent {
+  final Product product;
+  const SelectProductForCartEvent(this.product);
+  @override
+  List<Object?> get props => [product];
+}
+
 class PickSourceEvent extends BillingEvent {
   final StockBatch batch;
   final Product product;
@@ -67,6 +75,12 @@ class PrintReceiptEvent extends BillingEvent {
   final String address2;
   final String phone;
   final String footer;
+  final String invoiceTitle;
+  final String invoiceCodePrefix;
+  final String sellerLabel;
+  final String buyerLabel;
+  final String signatureNote;
+  final String logoImagePath;
 
   const PrintReceiptEvent({
     required this.shopName,
@@ -74,8 +88,26 @@ class PrintReceiptEvent extends BillingEvent {
     required this.address2,
     required this.phone,
     required this.footer,
+    required this.invoiceTitle,
+    required this.invoiceCodePrefix,
+    required this.sellerLabel,
+    required this.buyerLabel,
+    required this.signatureNote,
+    required this.logoImagePath,
   });
 
   @override
-  List<Object?> get props => [shopName, address1, address2, phone, footer];
+  List<Object?> get props => [
+        shopName,
+        address1,
+        address2,
+        phone,
+        footer,
+        invoiceTitle,
+        invoiceCodePrefix,
+        sellerLabel,
+        buyerLabel,
+        signatureNote,
+        logoImagePath,
+      ];
 }

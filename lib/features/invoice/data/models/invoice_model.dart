@@ -27,6 +27,9 @@ class InvoiceModel extends HiveObject {
   @HiveField(5)
   final double totalSnapshot;
 
+  @HiveField(6)
+  final int? sequenceNumber;
+
   InvoiceModel({
     required this.id,
     required this.statusIndex,
@@ -34,6 +37,7 @@ class InvoiceModel extends HiveObject {
     this.confirmedAt,
     required this.items,
     required this.totalSnapshot,
+    this.sequenceNumber,
   });
 
   InvoiceStatus get _status => InvoiceStatus.values[statusIndex.clamp(0, 2)];
@@ -44,6 +48,7 @@ class InvoiceModel extends HiveObject {
         createdAt: createdAt,
         confirmedAt: confirmedAt,
         items: items.map((e) => e.toEntity()).toList(),
+        sequenceNumber: sequenceNumber,
       );
 
   factory InvoiceModel.fromEntity(Invoice inv) => InvoiceModel(
@@ -53,5 +58,6 @@ class InvoiceModel extends HiveObject {
         confirmedAt: inv.confirmedAt,
         items: inv.items.map(InvoiceItemModel.fromEntity).toList(),
         totalSnapshot: inv.total,
+        sequenceNumber: inv.sequenceNumber,
       );
 }

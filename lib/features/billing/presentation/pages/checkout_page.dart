@@ -1,9 +1,17 @@
+import 'dart:typed_data';
+import 'dart:io';
+
+import 'package:billing_app/core/utils/money_format.dart';
+import 'package:billing_app/core/utils/printer_helper.dart';
 import 'package:billing_app/core/widgets/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:gal/gal.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../invoice/domain/entities/invoice_status.dart';
 import '../../../shop/presentation/bloc/shop_bloc.dart';
@@ -18,6 +26,8 @@ class CheckoutPage extends StatefulWidget {
 }
 
 class _CheckoutPageState extends State<CheckoutPage> {
+  bool _isExportingReceiptImage = false;
+
   @override
   Widget build(BuildContext context) {
     const borderColor = Color(0xFFE5E5EA);
@@ -162,11 +172,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                           },
                                         ),
                                         _buildDataCell(
-                                            '₹${item.price.toStringAsFixed(2)}',
+                                            formatMoney(item.price),
                                             TextAlign.right,
                                             isSubtitle: true),
                                         _buildDataCell(
-                                            '₹${item.lineTotal.toStringAsFixed(2)}',
+                                            formatMoney(item.lineTotal),
                                             TextAlign.right,
                                             isBold: true),
                                       ],
@@ -244,7 +254,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                     ),
                                   ),
                                   Text(
-                                    '₹${billingState.totalAmount.toStringAsFixed(2)}',
+                                    formatMoney(billingState.totalAmount),
                                     style: const TextStyle(
                                       fontSize: 24,
                                       fontWeight: FontWeight.bold,
@@ -259,6 +269,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         ),
                         if (isDraft) ...[
                           PrimaryButton(
+                            outerPadding: const EdgeInsets.fromLTRB(
+                                24, 8, 24, 0),
                             onPressed: billingState.cartItems.isEmpty
                                 ? null
                                 : () => context
@@ -268,30 +280,63 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             icon: Icons.check_circle,
                             isLoading: billingState.isConfirming,
                           ),
-                          const SizedBox(height: 8),
                         ],
-                        PrimaryButton(
-                          onPressed: () {
-                            if (shopState is ShopLoaded) {
-                              context.read<BillingBloc>().add(PrintReceiptEvent(
-                                    shopName: shopState.shop.name,
-                                    address1: shopState.shop.addressLine1,
-                                    address2: shopState.shop.addressLine2,
-                                    phone: shopState.shop.phoneNumber,
-                                    footer: shopState.shop.footerText));
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'Chưa tải thông tin cửa hàng'),
-                                      backgroundColor: Colors.red));
-                            }
-                          },
-                          label: isDraft
-                              ? 'In hóa đơn (Chưa xác nhận)'
-                              : 'In hóa đơn',
-                          icon: Icons.print,
-                          isLoading: billingState.isPrinting,
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: PrimaryButton(
+                                outerPadding: const EdgeInsets.fromLTRB(
+                                    24, 4, 6, 12),
+                                onPressed: () {
+                                  if (shopState is ShopLoaded) {
+                                    context.read<BillingBloc>().add(
+                                        PrintReceiptEvent(
+                                            shopName: shopState.shop.name,
+                                            address1:
+                                                shopState.shop.addressLine1,
+                                            address2:
+                                                shopState.shop.addressLine2,
+                                            phone: shopState.shop.phoneNumber,
+                                            footer: shopState.shop.footerText,
+                                            invoiceTitle:
+                                                shopState.shop.invoiceTitle,
+                                            invoiceCodePrefix: shopState.shop
+                                                .invoiceCodePrefix,
+                                            sellerLabel:
+                                                shopState.shop.sellerLabel,
+                                            buyerLabel:
+                                                shopState.shop.buyerLabel,
+                                            signatureNote:
+                                                shopState.shop.signatureNote,
+                                            logoImagePath: shopState
+                                                .shop.logoImagePath));
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                'Chưa tải thông tin cửa hàng'),
+                                            backgroundColor: Colors.red));
+                                  }
+                                },
+                                label: 'In hóa đơn',
+                                icon: Icons.print,
+                                isLoading: billingState.isPrinting,
+                              ),
+                            ),
+                            Expanded(
+                              child: PrimaryButton(
+                                outerPadding: const EdgeInsets.fromLTRB(
+                                    6, 4, 24, 12),
+                                onPressed: _isExportingReceiptImage
+                                    ? null
+                                    : () => _exportReceiptImage(shopState),
+                                label: 'Lưu & chia sẻ',
+                                icon: Icons.image_outlined,
+                                isLoading: _isExportingReceiptImage,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -333,6 +378,92 @@ class _CheckoutPageState extends State<CheckoutPage> {
       return;
     }
     if (mounted) context.go('/');
+  }
+
+  Future<void> _exportReceiptImage(ShopState shopState) async {
+    if (shopState is! ShopLoaded) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Chưa tải thông tin cửa hàng'),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
+
+    final billingState = context.read<BillingBloc>().state;
+    if (billingState.cartItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Giỏ hàng trống, chưa có bill để lưu'),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
+
+    setState(() => _isExportingReceiptImage = true);
+    try {
+      final now = DateTime.now();
+      final Uint8List bytes = await PrinterHelper().buildReceiptImageBytes(
+        shopName: shopState.shop.name,
+        address1: shopState.shop.addressLine1,
+        address2: shopState.shop.addressLine2,
+        phone: shopState.shop.phoneNumber,
+        items: billingState.cartItems
+            .map((item) => {
+                  'name': item.productName,
+                  'qty': item.quantity.toString(),
+                  'price': formatMoney(item.price),
+                  'total': formatMoney(item.lineTotal),
+                })
+            .toList(),
+        total: billingState.totalAmount,
+        footer: shopState.shop.footerText,
+        invoiceTitle: shopState.shop.invoiceTitle,
+        invoiceCodePrefix: shopState.shop.invoiceCodePrefix,
+        invoiceId: billingState.currentInvoice?.id,
+        invoiceSequence: billingState.currentInvoice?.sequenceNumber,
+        sellerLabel: shopState.shop.sellerLabel,
+        buyerLabel: shopState.shop.buyerLabel,
+        signatureNote: shopState.shop.signatureNote,
+        logoImagePath: shopState.shop.logoImagePath,
+        createdAt: billingState.currentInvoice?.createdAt ?? now,
+      );
+
+      final bool hasAccess = await Gal.hasAccess(toAlbum: true);
+      if (!hasAccess) {
+        await Gal.requestAccess(toAlbum: true);
+      }
+      await Gal.putImageBytes(
+        bytes,
+        album: 'Tiger Retail',
+        name: 'bill_${DateFormat('yyyyMMdd_HHmmss').format(now)}',
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Đã lưu ảnh bill vào thư viện'),
+        backgroundColor: Colors.green,
+      ));
+
+      final Directory tempDir = await getTemporaryDirectory();
+      final String fileName = 'bill_${DateFormat('yyyyMMdd_HHmmss').format(now)}.png';
+      final File file = File('${tempDir.path}/$fileName');
+      await file.writeAsBytes(bytes);
+
+      if (!mounted) return;
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: 'Hóa đơn từ ${shopState.shop.name}',
+        subject: 'Bill ${DateFormat('dd/MM/yyyy HH:mm').format(now)}',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Xuất ảnh bill thất bại: $e'),
+        backgroundColor: Colors.red,
+      ));
+    } finally {
+      if (mounted) {
+        setState(() => _isExportingReceiptImage = false);
+      }
+    }
   }
 
   Widget _buildHeaderCell(String text, TextAlign align) {

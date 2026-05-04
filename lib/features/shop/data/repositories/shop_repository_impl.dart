@@ -23,7 +23,13 @@ class ShopRepositoryImpl implements ShopRepository {
             addressLine2: 'Salem - 636453',
             phoneNumber: '+917010674588',
             upiId: 'dineshsowndar@oksbi',
-            footerText: 'Cảm ơn quý khách, hẹn gặp lại!'));
+            footerText: 'Cảm ơn quý khách!',
+            invoiceTitle: 'HÓA ĐƠN BÁN HÀNG',
+            invoiceCodePrefix: 'HD',
+            sellerLabel: 'Người bán hàng',
+            buyerLabel: 'Người mua hàng',
+            signatureNote: '(Ký, ghi rõ họ tên)',
+            logoImagePath: ''));
       }
     } catch (e) {
       return Left(CacheFailure(e.toString()));

@@ -1,7 +1,7 @@
 name: billing_app
-description: A new Flutter project.
+description: Tiger Retail — POS offline cho một cửa hàng (Tiger Solution / Tiger Studio).
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.1.0+2
 
 environment:
   sdk: '>=3.1.0 <4.0.0'
@@ -43,6 +43,11 @@ dependencies:
   bloc: ^8.1.4
   uuid: ^4.5.2
   app_settings: ^7.0.0
+  path_provider: ^2.1.4
+  share_plus: ^10.0.2
+  gal: ^2.3.1
+  image_picker: ^1.1.2
+  package_info_plus: ^9.0.1
 
 dev_dependencies:
   flutter_test:

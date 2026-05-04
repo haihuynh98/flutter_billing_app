@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/utils/money_format.dart';
 import '../../../billing/presentation/bloc/billing_bloc.dart';
 import '../../domain/entities/invoice.dart';
 import '../bloc/invoice_bloc.dart';
@@ -92,9 +93,13 @@ class _InvoiceHistoryPageState extends State<InvoiceHistoryPage>
           tileColor: Colors.white,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          title: Text('Đơn #${inv.id.substring(0, 8)}'),
+          title: Text(
+            inv.sequenceNumber != null
+                ? 'Đơn #${inv.sequenceNumber}'
+                : 'Đơn #${inv.id.substring(0, 8)}',
+          ),
           subtitle: Text(
-              '${df.format(inv.createdAt)} · ${inv.items.length} dòng · ₹${inv.total.toStringAsFixed(2)}'),
+              '${df.format(inv.createdAt)} · ${inv.items.length} dòng · ${formatMoney(inv.total)}'),
           onTap: () {
             context.read<BillingBloc>().add(OpenDraftInvoiceEvent(inv.id));
             context.go('/');
@@ -120,9 +125,13 @@ class _InvoiceHistoryPageState extends State<InvoiceHistoryPage>
           tileColor: Colors.white,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          title: Text('Đơn #${inv.id.substring(0, 8)}'),
+          title: Text(
+            inv.sequenceNumber != null
+                ? 'Đơn #${inv.sequenceNumber}'
+                : 'Đơn #${inv.id.substring(0, 8)}',
+          ),
           subtitle: Text(
-              '${df.format(inv.confirmedAt ?? inv.createdAt)} · ₹${inv.total.toStringAsFixed(2)}'),
+              '${df.format(inv.confirmedAt ?? inv.createdAt)} · ${formatMoney(inv.total)}'),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push('/invoices/${inv.id}', extra: inv),
         );

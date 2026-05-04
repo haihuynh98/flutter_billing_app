@@ -1,4 +1,5 @@
 import 'package:fpdart/fpdart.dart';
+import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/data/hive_database.dart';
@@ -24,11 +25,21 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
     return sum;
   }
 
+  int _nextSequenceNumber(Box<InvoiceModel> box) {
+    int max = 0;
+    for (final i in box.values) {
+      final n = i.sequenceNumber;
+      if (n != null && n > max) max = n;
+    }
+    return max + 1;
+  }
+
   @override
   Future<Either<Failure, Invoice>> createDraft() async {
     try {
       final box = HiveDatabase.invoiceBox;
       final id = const Uuid().v4();
+      final seq = _nextSequenceNumber(box);
       final m = InvoiceModel(
         id: id,
         statusIndex: InvoiceStatus.draft.index,
@@ -36,6 +47,7 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
         confirmedAt: null,
         items: [],
         totalSnapshot: 0,
+        sequenceNumber: seq,
       );
       await box.put(id, m);
       return Right(m.toEntity());
@@ -48,7 +60,22 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
   Future<Either<Failure, Invoice?>> getInvoice(String id) async {
     try {
       final box = HiveDatabase.invoiceBox;
-      final m = box.get(id);
+      var m = box.get(id);
+      if (m != null &&
+          m.statusIndex == InvoiceStatus.draft.index &&
+          m.sequenceNumber == null) {
+        final seq = _nextSequenceNumber(box);
+        m = InvoiceModel(
+          id: m.id,
+          statusIndex: m.statusIndex,
+          createdAt: m.createdAt,
+          confirmedAt: m.confirmedAt,
+          items: List<InvoiceItemModel>.from(m.items),
+          totalSnapshot: m.totalSnapshot,
+          sequenceNumber: seq,
+        );
+        await box.put(id, m);
+      }
       return Right(m?.toEntity());
     } catch (e) {
       return Left(CacheFailure(e.toString()));
@@ -68,6 +95,10 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
       }
       if (inv.statusIndex != InvoiceStatus.draft.index) {
         return Left(ValidationFailure('Chỉ sửa được đơn đang thực hiện'));
+      }
+      var seq = inv.sequenceNumber;
+      if (seq == null) {
+        seq = _nextSequenceNumber(box);
       }
       final items = List<InvoiceItemModel>.from(inv.items);
       final idx = items.indexWhere((e) =>
@@ -93,6 +124,7 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
         confirmedAt: inv.confirmedAt,
         items: items,
         totalSnapshot: _totalItems(items),
+        sequenceNumber: seq,
       );
       await box.put(invoiceId, updated);
       return Right(updated.toEntity());
@@ -116,6 +148,10 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
       }
       if (inv.statusIndex != InvoiceStatus.draft.index) {
         return Left(ValidationFailure('Chỉ sửa được đơn đang thực hiện'));
+      }
+      var seq = inv.sequenceNumber;
+      if (seq == null) {
+        seq = _nextSequenceNumber(box);
       }
       final items = List<InvoiceItemModel>.from(inv.items);
       final idx = items.indexWhere((e) =>
@@ -143,6 +179,7 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
         confirmedAt: inv.confirmedAt,
         items: items,
         totalSnapshot: _totalItems(items),
+        sequenceNumber: seq,
       );
       await box.put(invoiceId, updated);
       return Right(updated.toEntity());
@@ -195,6 +232,8 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
       return await deduct.fold(
         (f) async => Left(f),
         (_) async {
+          final seq =
+              inv.sequenceNumber ?? _nextSequenceNumber(box);
           final updated = InvoiceModel(
             id: inv.id,
             statusIndex: InvoiceStatus.confirmed.index,
@@ -202,6 +241,7 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
             confirmedAt: DateTime.now(),
             items: List<InvoiceItemModel>.from(inv.items),
             totalSnapshot: _totalItems(inv.items),
+            sequenceNumber: seq,
           );
           await box.put(id, updated);
           return Right(updated.toEntity());

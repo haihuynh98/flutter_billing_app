@@ -1,7 +1,8 @@
+import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:app_settings/app_settings.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../shop/presentation/bloc/shop_bloc.dart';
@@ -17,6 +18,8 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  final Future<PackageInfo> _packageInfoFuture = PackageInfo.fromPlatform();
+
   @override
   void initState() {
     super.initState();
@@ -89,6 +92,51 @@ class _SettingsPageState extends State<SettingsPage> {
                       Text(shopName.toUpperCase(),
                           style: const TextStyle(
                               fontSize: 20, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 20),
+                      Divider(height: 1, color: Colors.grey[200]),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Tiger Retail',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      FutureBuilder<PackageInfo>(
+                        future: _packageInfoFuture,
+                        builder: (context, snapshot) {
+                          if (snapshot.hasError || !snapshot.hasData) {
+                            return Text(
+                              snapshot.connectionState == ConnectionState.done
+                                  ? '—'
+                                  : 'Đang tải phiên bản…',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            );
+                          }
+                          final p = snapshot.data!;
+                          return Text(
+                            'Phiên bản ${p.version} (bản ${p.buildNumber})',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'POS offline cho một cửa hàng · Tiger Solution',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 11,
+                          height: 1.35,
+                          color: Colors.grey[500],
+                        ),
+                      ),
                     ],
                   );
                 },

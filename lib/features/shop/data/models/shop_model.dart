@@ -23,6 +23,24 @@ class ShopModel extends Shop {
   @override
   @HiveField(5)
   final String footerText;
+  @override
+  @HiveField(6, defaultValue: 'HÓA ĐƠN BÁN HÀNG')
+  final String invoiceTitle;
+  @override
+  @HiveField(7, defaultValue: 'HD')
+  final String invoiceCodePrefix;
+  @override
+  @HiveField(8, defaultValue: 'Người bán hàng')
+  final String sellerLabel;
+  @override
+  @HiveField(9, defaultValue: 'Người mua hàng')
+  final String buyerLabel;
+  @override
+  @HiveField(10, defaultValue: '(Ký, ghi rõ họ tên)')
+  final String signatureNote;
+  @override
+  @HiveField(11, defaultValue: '')
+  final String logoImagePath;
 
   const ShopModel({
     required this.name,
@@ -31,6 +49,12 @@ class ShopModel extends Shop {
     required this.phoneNumber,
     required this.upiId,
     required this.footerText,
+    required this.invoiceTitle,
+    required this.invoiceCodePrefix,
+    required this.sellerLabel,
+    required this.buyerLabel,
+    required this.signatureNote,
+    required this.logoImagePath,
   }) : super(
           name: name,
           addressLine1: addressLine1,
@@ -38,6 +62,12 @@ class ShopModel extends Shop {
           phoneNumber: phoneNumber,
           upiId: upiId,
           footerText: footerText,
+          invoiceTitle: invoiceTitle,
+          invoiceCodePrefix: invoiceCodePrefix,
+          sellerLabel: sellerLabel,
+          buyerLabel: buyerLabel,
+          signatureNote: signatureNote,
+          logoImagePath: logoImagePath,
         );
 
   factory ShopModel.fromEntity(Shop shop) {
@@ -48,6 +78,12 @@ class ShopModel extends Shop {
       phoneNumber: shop.phoneNumber,
       upiId: shop.upiId,
       footerText: shop.footerText,
+      invoiceTitle: shop.invoiceTitle,
+      invoiceCodePrefix: shop.invoiceCodePrefix,
+      sellerLabel: shop.sellerLabel,
+      buyerLabel: shop.buyerLabel,
+      signatureNote: shop.signatureNote,
+      logoImagePath: shop.logoImagePath,
     );
   }
 
