@@ -101,3 +101,5 @@ dart run build_runner build --delete-conflicting-outputs
 flutter analyze
 flutter test
 ```
+
+After changing `version:` in `pubspec.yaml`, run `build_runner` so `lib/src/version.dart` (from `build_version`, used on Settings) stays in sync. Native `package_info` can lag until a full rebuild (`flutter clean` / platform build) because iOS `Generated.xcconfig` and Android `local.properties` are generated.

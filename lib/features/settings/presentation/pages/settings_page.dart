@@ -1,8 +1,8 @@
 import 'package:app_settings/app_settings.dart';
+import 'package:billing_app/src/version.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../shop/presentation/bloc/shop_bloc.dart';
@@ -18,8 +18,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  final Future<PackageInfo> _packageInfoFuture = PackageInfo.fromPlatform();
-
   @override
   void initState() {
     super.initState();
@@ -64,6 +62,13 @@ class _SettingsPageState extends State<SettingsPage> {
                     if (initials.isEmpty) initials = 'CH';
                   }
 
+                  final sep = packageVersion.indexOf('+');
+                  final displayVersion = sep == -1
+                      ? packageVersion
+                      : packageVersion.substring(0, sep);
+                  final displayBuild =
+                      sep == -1 ? '-' : packageVersion.substring(sep + 1);
+
                   return Column(
                     children: [
                       Container(
@@ -103,29 +108,12 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      FutureBuilder<PackageInfo>(
-                        future: _packageInfoFuture,
-                        builder: (context, snapshot) {
-                          if (snapshot.hasError || !snapshot.hasData) {
-                            return Text(
-                              snapshot.connectionState == ConnectionState.done
-                                  ? '—'
-                                  : 'Đang tải phiên bản…',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            );
-                          }
-                          final p = snapshot.data!;
-                          return Text(
-                            'Phiên bản ${p.version} (bản ${p.buildNumber})',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                          );
-                        },
+                      Text(
+                        'Phiên bản $displayVersion (bản $displayBuild)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
