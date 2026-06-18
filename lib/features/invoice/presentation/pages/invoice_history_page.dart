@@ -99,7 +99,7 @@ class _InvoiceHistoryPageState extends State<InvoiceHistoryPage>
                 : 'Đơn #${inv.id.substring(0, 8)}',
           ),
           subtitle: Text(
-              '${df.format(inv.createdAt)} · ${inv.items.length} dòng · ${formatMoney(inv.total)}'),
+              '${df.format(inv.createdAt)} · ${inv.customerName} · ${inv.items.length} dòng · ${formatMoney(inv.total)}'),
           onTap: () {
             context.read<BillingBloc>().add(OpenDraftInvoiceEvent(inv.id));
             context.go('/');
@@ -131,7 +131,7 @@ class _InvoiceHistoryPageState extends State<InvoiceHistoryPage>
                 : 'Đơn #${inv.id.substring(0, 8)}',
           ),
           subtitle: Text(
-              '${df.format(inv.confirmedAt ?? inv.createdAt)} · ${formatMoney(inv.total)}'),
+              '${df.format(inv.confirmedAt ?? inv.createdAt)} · ${inv.customerName} · ${formatMoney(inv.total)}'),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push('/invoices/${inv.id}', extra: inv),
         );

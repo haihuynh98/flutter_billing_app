@@ -1,5 +1,9 @@
 import 'package:get_it/get_it.dart';
 
+import '../features/customer/data/repositories/customer_repository_impl.dart';
+import '../features/customer/domain/repositories/customer_repository.dart';
+import '../features/customer/domain/usecases/customer_usecases.dart';
+import '../features/customer/presentation/bloc/customer_bloc.dart';
 import '../features/invoice/data/repositories/invoice_repository_impl.dart';
 import '../features/invoice/domain/repositories/invoice_repository.dart';
 import '../features/invoice/domain/usecases/invoice_usecases.dart';
@@ -36,6 +40,7 @@ Future<void> init() async {
   sl.registerLazySingleton<StockRepository>(() => StockRepositoryImpl());
   sl.registerLazySingleton<InvoiceRepository>(
       () => InvoiceRepositoryImpl(sl()));
+  sl.registerLazySingleton<CustomerRepository>(() => CustomerRepositoryImpl());
 
   // Product use cases
   sl.registerLazySingleton(() => GetProductsUseCase(sl()));
@@ -71,6 +76,7 @@ Future<void> init() async {
 
   // Invoice use cases
   sl.registerLazySingleton(() => CreateDraftInvoiceUseCase(sl()));
+  sl.registerLazySingleton(() => SetInvoiceCustomerUseCase(sl()));
   sl.registerLazySingleton(() => GetInvoiceUseCase(sl()));
   sl.registerLazySingleton(() => AddOrIncrementInvoiceItemUseCase(sl()));
   sl.registerLazySingleton(() => UpdateInvoiceItemQuantityUseCase(sl()));
@@ -79,6 +85,12 @@ Future<void> init() async {
   sl.registerLazySingleton(() => CancelDraftInvoiceUseCase(sl()));
   sl.registerLazySingleton(() => ListDraftInvoicesUseCase(sl()));
   sl.registerLazySingleton(() => ListConfirmedInvoicesUseCase(sl()));
+
+  // Customer use cases
+  sl.registerLazySingleton(() => GetCustomersUseCase(sl()));
+  sl.registerLazySingleton(() => AddCustomerUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateCustomerUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteCustomerUseCase(sl()));
 
   // Blocs
   sl.registerFactory(
@@ -127,6 +139,15 @@ Future<void> init() async {
       listDraftInvoicesUseCase: sl(),
       listConfirmedInvoicesUseCase: sl(),
       cancelDraftInvoiceUseCase: sl(),
+    ),
+  );
+
+  sl.registerFactory(
+    () => CustomerBloc(
+      getCustomersUseCase: sl(),
+      addCustomerUseCase: sl(),
+      updateCustomerUseCase: sl(),
+      deleteCustomerUseCase: sl(),
     ),
   );
 }

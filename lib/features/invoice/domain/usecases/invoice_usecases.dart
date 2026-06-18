@@ -6,13 +6,54 @@ import '../entities/invoice.dart';
 import '../entities/invoice_item.dart';
 import '../repositories/invoice_repository.dart';
 
-class CreateDraftInvoiceUseCase implements UseCase<Invoice, NoParams> {
+class CreateDraftInvoiceParams {
+  final String? customerId;
+  final String customerName;
+
+  const CreateDraftInvoiceParams({
+    this.customerId,
+    this.customerName = 'Khách hàng lẻ',
+  });
+}
+
+class CreateDraftInvoiceUseCase
+    implements UseCase<Invoice, CreateDraftInvoiceParams> {
   final InvoiceRepository repository;
   CreateDraftInvoiceUseCase(this.repository);
 
   @override
-  Future<Either<Failure, Invoice>> call(NoParams params) {
-    return repository.createDraft();
+  Future<Either<Failure, Invoice>> call(CreateDraftInvoiceParams params) {
+    return repository.createDraft(
+      customerId: params.customerId,
+      customerName: params.customerName,
+    );
+  }
+}
+
+class SetInvoiceCustomerParams {
+  final String invoiceId;
+  final String? customerId;
+  final String customerName;
+
+  const SetInvoiceCustomerParams({
+    required this.invoiceId,
+    this.customerId,
+    required this.customerName,
+  });
+}
+
+class SetInvoiceCustomerUseCase
+    implements UseCase<Invoice, SetInvoiceCustomerParams> {
+  final InvoiceRepository repository;
+  SetInvoiceCustomerUseCase(this.repository);
+
+  @override
+  Future<Either<Failure, Invoice>> call(SetInvoiceCustomerParams params) {
+    return repository.setCustomer(
+      invoiceId: params.invoiceId,
+      customerId: params.customerId,
+      customerName: params.customerName,
+    );
   }
 }
 

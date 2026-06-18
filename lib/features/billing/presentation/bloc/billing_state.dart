@@ -2,6 +2,8 @@ part of 'billing_bloc.dart';
 
 class BillingState extends Equatable {
   final Invoice? currentInvoice;
+  final String? pendingCustomerId;
+  final String pendingCustomerName;
   final Product? pendingProduct;
   final List<StockBatch> pendingSources;
   final String? error;
@@ -12,6 +14,8 @@ class BillingState extends Equatable {
 
   const BillingState({
     this.currentInvoice,
+    this.pendingCustomerId,
+    this.pendingCustomerName = RetailCustomer.name,
     this.pendingProduct,
     this.pendingSources = const [],
     this.error,
@@ -25,12 +29,22 @@ class BillingState extends Equatable {
 
   double get totalAmount => currentInvoice?.total ?? 0;
 
+  String? get selectedCustomerId =>
+      currentInvoice?.customerId ?? pendingCustomerId;
+
+  String get selectedCustomerName =>
+      currentInvoice?.customerName ?? pendingCustomerName;
+
   bool get needsSourcePick =>
       pendingProduct != null && pendingSources.isNotEmpty;
 
   BillingState copyWith({
     Invoice? currentInvoice,
     bool clearInvoice = false,
+    String? pendingCustomerId,
+    bool clearPendingCustomerId = false,
+    String? pendingCustomerName,
+    bool clearPendingCustomer = false,
     Product? pendingProduct,
     bool clearPendingProduct = false,
     List<StockBatch>? pendingSources,
@@ -45,6 +59,14 @@ class BillingState extends Equatable {
     return BillingState(
       currentInvoice:
           clearInvoice ? null : (currentInvoice ?? this.currentInvoice),
+      pendingCustomerId: clearPendingCustomer || clearInvoice
+          ? null
+          : (clearPendingCustomerId
+              ? null
+              : (pendingCustomerId ?? this.pendingCustomerId)),
+      pendingCustomerName: clearPendingCustomer || clearInvoice
+          ? RetailCustomer.name
+          : (pendingCustomerName ?? this.pendingCustomerName),
       pendingProduct: clearPendingProduct
           ? null
           : (pendingProduct ?? this.pendingProduct),
@@ -63,6 +85,8 @@ class BillingState extends Equatable {
 
   BillingState clearInvoice() => BillingState(
         currentInvoice: null,
+        pendingCustomerId: null,
+        pendingCustomerName: RetailCustomer.name,
         pendingProduct: null,
         pendingSources: const [],
         error: error,
@@ -86,6 +110,8 @@ class BillingState extends Equatable {
   @override
   List<Object?> get props => [
         currentInvoice,
+        pendingCustomerId,
+        pendingCustomerName,
         pendingProduct,
         pendingSources,
         error,

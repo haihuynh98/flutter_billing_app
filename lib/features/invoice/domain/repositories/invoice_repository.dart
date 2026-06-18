@@ -5,8 +5,16 @@ import '../entities/invoice.dart';
 import '../entities/invoice_item.dart';
 
 abstract class InvoiceRepository {
-  Future<Either<Failure, Invoice>> createDraft();
+  Future<Either<Failure, Invoice>> createDraft({
+    String? customerId,
+    String customerName = 'Khách hàng lẻ',
+  });
   Future<Either<Failure, Invoice?>> getInvoice(String id);
+  Future<Either<Failure, Invoice>> setCustomer({
+    required String invoiceId,
+    String? customerId,
+    required String customerName,
+  });
   Future<Either<Failure, Invoice>> addOrIncrementItem({
     required String invoiceId,
     required InvoiceItem itemDelta,

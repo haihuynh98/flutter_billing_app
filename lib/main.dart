@@ -6,6 +6,7 @@ import 'core/data/hive_database.dart';
 import 'core/service_locator.dart' as di;
 import 'core/theme/app_theme.dart';
 import 'features/billing/presentation/bloc/billing_bloc.dart';
+import 'features/customer/presentation/bloc/customer_bloc.dart';
 import 'features/invoice/presentation/bloc/invoice_bloc.dart';
 import 'features/product/presentation/bloc/product_bloc.dart';
 import 'features/settings/presentation/bloc/printer_bloc.dart';
@@ -42,6 +43,10 @@ class MyApp extends StatelessWidget {
         BlocProvider<InvoiceBloc>(
           create: (context) => di.sl<InvoiceBloc>(),
         ),
+        BlocProvider<CustomerBloc>(
+          create: (context) =>
+              di.sl<CustomerBloc>()..add(const LoadCustomersEvent()),
+        ),
         BlocProvider<BillingBloc>(
           create: (context) => BillingBloc(
             getProductByBarcodeUseCase: di.sl(),
@@ -52,6 +57,7 @@ class MyApp extends StatelessWidget {
             removeInvoiceItemUseCase: di.sl(),
             confirmInvoiceUseCase: di.sl(),
             cancelDraftInvoiceUseCase: di.sl(),
+            setInvoiceCustomerUseCase: di.sl(),
             listBatchesByProductUseCase: di.sl(),
           ),
         ),

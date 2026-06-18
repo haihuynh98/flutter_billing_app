@@ -152,6 +152,13 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 _buildDivider(),
                 _buildListItem(
+                  icon: Icons.people_outline,
+                  title: 'Khách hàng',
+                  subtitle: 'Danh sách và thông tin khách hàng',
+                  onTap: () => context.push('/customers'),
+                ),
+                _buildDivider(),
+                _buildListItem(
                   icon: Icons.receipt_long,
                   title: 'Lịch sử hóa đơn',
                   subtitle: 'Đơn đang thực hiện và đã xác nhận',
