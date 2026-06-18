@@ -34,4 +34,8 @@ abstract class InvoiceRepository {
   Future<Either<Failure, void>> cancelDraft(String id);
   Future<Either<Failure, List<Invoice>>> listDrafts();
   Future<Either<Failure, List<Invoice>>> listConfirmed({int limit = 100});
+  Future<Either<Failure, List<Invoice>>> listByCustomer({
+    required String? customerId,
+    int limit = 200,
+  });
 }

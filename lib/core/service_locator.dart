@@ -85,6 +85,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => CancelDraftInvoiceUseCase(sl()));
   sl.registerLazySingleton(() => ListDraftInvoicesUseCase(sl()));
   sl.registerLazySingleton(() => ListConfirmedInvoicesUseCase(sl()));
+  sl.registerLazySingleton(() => ListInvoicesByCustomerUseCase(sl()));
 
   // Customer use cases
   sl.registerLazySingleton(() => GetCustomersUseCase(sl()));
@@ -148,6 +149,12 @@ Future<void> init() async {
       addCustomerUseCase: sl(),
       updateCustomerUseCase: sl(),
       deleteCustomerUseCase: sl(),
+    ),
+  );
+
+  sl.registerFactory(
+    () => CustomerInvoiceHistoryBloc(
+      listInvoicesByCustomerUseCase: sl(),
     ),
   );
 }

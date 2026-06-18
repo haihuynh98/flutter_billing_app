@@ -335,4 +335,34 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
       return Left(CacheFailure(e.toString()));
     }
   }
+
+  bool _matchesCustomer(InvoiceModel invoice, String? customerId) {
+    if (customerId == null) return invoice.customerId == null;
+    return invoice.customerId == customerId;
+  }
+
+  @override
+  Future<Either<Failure, List<Invoice>>> listByCustomer({
+    required String? customerId,
+    int limit = 200,
+  }) async {
+    try {
+      final box = HiveDatabase.invoiceBox;
+      var list = box.values
+          .where((i) => _matchesCustomer(i, customerId))
+          .map((e) => e.toEntity())
+          .toList()
+        ..sort((a, b) {
+          final da = a.confirmedAt ?? a.createdAt;
+          final db = b.confirmedAt ?? b.createdAt;
+          return db.compareTo(da);
+        });
+      if (list.length > limit) {
+        list = list.take(limit).toList();
+      }
+      return Right(list);
+    } catch (e) {
+      return Left(CacheFailure(e.toString()));
+    }
+  }
 }

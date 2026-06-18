@@ -5,6 +5,7 @@ import '../../features/billing/presentation/pages/home_page.dart';
 import '../../features/billing/presentation/pages/scanner_page.dart';
 import '../../features/customer/domain/entities/customer.dart';
 import '../../features/customer/presentation/pages/add_customer_page.dart';
+import '../../features/customer/presentation/pages/customer_invoice_history_page.dart';
 import '../../features/customer/presentation/pages/customer_list_page.dart';
 import '../../features/customer/presentation/pages/edit_customer_page.dart';
 import '../../features/invoice/domain/entities/invoice.dart';
@@ -152,6 +153,19 @@ final router = GoRouter(
             final c = state.extra as Customer?;
             if (c == null) return const CustomerListPage();
             return EditCustomerPage(customer: c);
+          },
+        ),
+        GoRoute(
+          path: 'retail/invoices',
+          builder: (context, state) =>
+              const CustomerInvoiceHistoryPage.retail(),
+        ),
+        GoRoute(
+          path: ':id/invoices',
+          builder: (context, state) {
+            final c = state.extra as Customer?;
+            if (c == null) return const CustomerListPage();
+            return CustomerInvoiceHistoryPage(customer: c);
           },
         ),
       ],

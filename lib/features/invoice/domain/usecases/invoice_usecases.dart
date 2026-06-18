@@ -187,3 +187,21 @@ class ListConfirmedInvoicesUseCase implements UseCase<List<Invoice>, int> {
     return repository.listConfirmed(limit: limit);
   }
 }
+
+class ListInvoicesByCustomerParams {
+  final String? customerId;
+
+  const ListInvoicesByCustomerParams({this.customerId});
+}
+
+class ListInvoicesByCustomerUseCase
+    implements UseCase<List<Invoice>, ListInvoicesByCustomerParams> {
+  final InvoiceRepository repository;
+  ListInvoicesByCustomerUseCase(this.repository);
+
+  @override
+  Future<Either<Failure, List<Invoice>>> call(
+      ListInvoicesByCustomerParams params) {
+    return repository.listByCustomer(customerId: params.customerId);
+  }
+}

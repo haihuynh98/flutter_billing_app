@@ -53,11 +53,14 @@ class CustomerListPage extends StatelessWidget {
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               if (index == 0) {
-                return _RetailCustomerTile();
+                return _RetailCustomerTile(
+                  onTap: () => context.push('/customers/retail/invoices'),
+                );
               }
               final c = state.customers[index - 1];
               return _CustomerTile(
                 customer: c,
+                onTap: () => context.push('/customers/${c.id}/invoices', extra: c),
                 onEdit: () => context.push('/customers/edit/${c.id}', extra: c),
                 onDelete: () => _confirmDelete(context, c),
               );
@@ -98,51 +101,60 @@ class CustomerListPage extends StatelessWidget {
 }
 
 class _RetailCustomerTile extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _RetailCustomerTile({required this.onTap});
+
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.person_outline, color: Colors.grey.shade600),
               ),
-              child: Icon(Icons.person_outline, color: Colors.grey.shade600),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(RetailCustomer.name,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 14)),
-                  const SizedBox(height: 2),
-                  Text('Mặc định khi không chọn khách',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[500])),
-                ],
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(RetailCustomer.name,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 14)),
+                    const SizedBox(height: 2),
+                    Text('Chạm để xem lịch sử đơn khách lẻ',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                  ],
+                ),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text('Mặc định',
+                    style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue.shade700)),
               ),
-              child: Text('Mặc định',
-                  style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue.shade700)),
-            ),
-          ],
+              Icon(Icons.chevron_right, color: Colors.grey[400]),
+            ],
+          ),
         ),
       ),
     );
@@ -151,11 +163,13 @@ class _RetailCustomerTile extends StatelessWidget {
 
 class _CustomerTile extends StatelessWidget {
   final Customer customer;
+  final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _CustomerTile({
     required this.customer,
+    required this.onTap,
     required this.onEdit,
     required this.onDelete,
   });
@@ -166,7 +180,7 @@ class _CustomerTile extends StatelessWidget {
       color: Colors.white,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
-        onTap: onEdit,
+        onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -195,14 +209,9 @@ class _CustomerTile extends StatelessWidget {
                           style: TextStyle(
                               fontSize: 12, color: Colors.grey[500])),
                     ],
-                    if (customer.address.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(customer.address,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                              fontSize: 12, color: Colors.grey[500])),
-                    ],
+                    const SizedBox(height: 2),
+                    Text('Chạm để xem lịch sử đơn',
+                        style: TextStyle(fontSize: 11, color: Colors.grey[400])),
                   ],
                 ),
               ),
@@ -210,12 +219,15 @@ class _CustomerTile extends StatelessWidget {
                 icon: const Icon(Icons.edit_outlined, size: 20),
                 color: AppTheme.primaryColor,
                 onPressed: onEdit,
+                tooltip: 'Sửa',
               ),
               IconButton(
                 icon: const Icon(Icons.delete_outline, size: 20),
                 color: Colors.red,
                 onPressed: onDelete,
+                tooltip: 'Xóa',
               ),
+              Icon(Icons.chevron_right, color: Colors.grey[400]),
             ],
           ),
         ),
