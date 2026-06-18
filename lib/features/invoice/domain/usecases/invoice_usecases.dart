@@ -6,13 +6,54 @@ import '../entities/invoice.dart';
 import '../entities/invoice_item.dart';
 import '../repositories/invoice_repository.dart';
 
-class CreateDraftInvoiceUseCase implements UseCase<Invoice, NoParams> {
+class CreateDraftInvoiceParams {
+  final String? customerId;
+  final String customerName;
+
+  const CreateDraftInvoiceParams({
+    this.customerId,
+    this.customerName = 'Khách hàng lẻ',
+  });
+}
+
+class CreateDraftInvoiceUseCase
+    implements UseCase<Invoice, CreateDraftInvoiceParams> {
   final InvoiceRepository repository;
   CreateDraftInvoiceUseCase(this.repository);
 
   @override
-  Future<Either<Failure, Invoice>> call(NoParams params) {
-    return repository.createDraft();
+  Future<Either<Failure, Invoice>> call(CreateDraftInvoiceParams params) {
+    return repository.createDraft(
+      customerId: params.customerId,
+      customerName: params.customerName,
+    );
+  }
+}
+
+class SetInvoiceCustomerParams {
+  final String invoiceId;
+  final String? customerId;
+  final String customerName;
+
+  const SetInvoiceCustomerParams({
+    required this.invoiceId,
+    this.customerId,
+    required this.customerName,
+  });
+}
+
+class SetInvoiceCustomerUseCase
+    implements UseCase<Invoice, SetInvoiceCustomerParams> {
+  final InvoiceRepository repository;
+  SetInvoiceCustomerUseCase(this.repository);
+
+  @override
+  Future<Either<Failure, Invoice>> call(SetInvoiceCustomerParams params) {
+    return repository.setCustomer(
+      invoiceId: params.invoiceId,
+      customerId: params.customerId,
+      customerName: params.customerName,
+    );
   }
 }
 
@@ -144,5 +185,23 @@ class ListConfirmedInvoicesUseCase implements UseCase<List<Invoice>, int> {
   @override
   Future<Either<Failure, List<Invoice>>> call(int limit) {
     return repository.listConfirmed(limit: limit);
+  }
+}
+
+class ListInvoicesByCustomerParams {
+  final String? customerId;
+
+  const ListInvoicesByCustomerParams({this.customerId});
+}
+
+class ListInvoicesByCustomerUseCase
+    implements UseCase<List<Invoice>, ListInvoicesByCustomerParams> {
+  final InvoiceRepository repository;
+  ListInvoicesByCustomerUseCase(this.repository);
+
+  @override
+  Future<Either<Failure, List<Invoice>>> call(
+      ListInvoicesByCustomerParams params) {
+    return repository.listByCustomer(customerId: params.customerId);
   }
 }

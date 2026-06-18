@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../../core/data/hive_database.dart';
 import '../../../../core/error/failure.dart';
+import '../../../customer/domain/entities/customer.dart';
 import '../../../stock/domain/repositories/stock_repository.dart';
 import '../../domain/entities/invoice.dart';
 import '../../domain/entities/invoice_item.dart';
@@ -34,8 +35,35 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
     return max + 1;
   }
 
+  InvoiceModel _rebuild(
+    InvoiceModel inv, {
+    List<InvoiceItemModel>? items,
+    int? statusIndex,
+    DateTime? confirmedAt,
+    int? sequenceNumber,
+    String? customerId,
+    bool clearCustomerId = false,
+    String? customerName,
+  }) {
+    final nextItems = items ?? inv.items;
+    return InvoiceModel(
+      id: inv.id,
+      statusIndex: statusIndex ?? inv.statusIndex,
+      createdAt: inv.createdAt,
+      confirmedAt: confirmedAt ?? inv.confirmedAt,
+      items: nextItems,
+      totalSnapshot: _totalItems(nextItems),
+      sequenceNumber: sequenceNumber ?? inv.sequenceNumber,
+      customerId: clearCustomerId ? null : (customerId ?? inv.customerId),
+      customerName: customerName ?? inv.customerName,
+    );
+  }
+
   @override
-  Future<Either<Failure, Invoice>> createDraft() async {
+  Future<Either<Failure, Invoice>> createDraft({
+    String? customerId,
+    String customerName = RetailCustomer.name,
+  }) async {
     try {
       final box = HiveDatabase.invoiceBox;
       final id = const Uuid().v4();
@@ -48,6 +76,8 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
         items: [],
         totalSnapshot: 0,
         sequenceNumber: seq,
+        customerId: customerId,
+        customerName: customerName,
       );
       await box.put(id, m);
       return Right(m.toEntity());
@@ -65,18 +95,38 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
           m.statusIndex == InvoiceStatus.draft.index &&
           m.sequenceNumber == null) {
         final seq = _nextSequenceNumber(box);
-        m = InvoiceModel(
-          id: m.id,
-          statusIndex: m.statusIndex,
-          createdAt: m.createdAt,
-          confirmedAt: m.confirmedAt,
-          items: List<InvoiceItemModel>.from(m.items),
-          totalSnapshot: m.totalSnapshot,
-          sequenceNumber: seq,
-        );
+        m = _rebuild(m, sequenceNumber: seq);
         await box.put(id, m);
       }
       return Right(m?.toEntity());
+    } catch (e) {
+      return Left(CacheFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Invoice>> setCustomer({
+    required String invoiceId,
+    String? customerId,
+    required String customerName,
+  }) async {
+    try {
+      final box = HiveDatabase.invoiceBox;
+      final inv = box.get(invoiceId);
+      if (inv == null) {
+        return Left(ValidationFailure('Không tìm thấy hóa đơn'));
+      }
+      if (inv.statusIndex != InvoiceStatus.draft.index) {
+        return Left(ValidationFailure('Chỉ sửa được đơn đang thực hiện'));
+      }
+      final updated = _rebuild(
+        inv,
+        customerId: customerId,
+        clearCustomerId: customerId == null,
+        customerName: customerName,
+      );
+      await box.put(invoiceId, updated);
+      return Right(updated.toEntity());
     } catch (e) {
       return Left(CacheFailure(e.toString()));
     }
@@ -117,15 +167,7 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
       } else {
         items.add(InvoiceItemModel.fromEntity(itemDelta));
       }
-      final updated = InvoiceModel(
-        id: inv.id,
-        statusIndex: inv.statusIndex,
-        createdAt: inv.createdAt,
-        confirmedAt: inv.confirmedAt,
-        items: items,
-        totalSnapshot: _totalItems(items),
-        sequenceNumber: seq,
-      );
+      final updated = _rebuild(inv, items: items, sequenceNumber: seq);
       await box.put(invoiceId, updated);
       return Right(updated.toEntity());
     } catch (e) {
@@ -172,15 +214,7 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
           sourceBatchId: cur.sourceBatchId,
         );
       }
-      final updated = InvoiceModel(
-        id: inv.id,
-        statusIndex: inv.statusIndex,
-        createdAt: inv.createdAt,
-        confirmedAt: inv.confirmedAt,
-        items: items,
-        totalSnapshot: _totalItems(items),
-        sequenceNumber: seq,
-      );
+      final updated = _rebuild(inv, items: items, sequenceNumber: seq);
       await box.put(invoiceId, updated);
       return Right(updated.toEntity());
     } catch (e) {
@@ -234,13 +268,10 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
         (_) async {
           final seq =
               inv.sequenceNumber ?? _nextSequenceNumber(box);
-          final updated = InvoiceModel(
-            id: inv.id,
+          final updated = _rebuild(
+            inv,
             statusIndex: InvoiceStatus.confirmed.index,
-            createdAt: inv.createdAt,
             confirmedAt: DateTime.now(),
-            items: List<InvoiceItemModel>.from(inv.items),
-            totalSnapshot: _totalItems(inv.items),
             sequenceNumber: seq,
           );
           await box.put(id, updated);
@@ -295,6 +326,36 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
           final ca = a.confirmedAt ?? a.createdAt;
           final cb = b.confirmedAt ?? b.createdAt;
           return cb.compareTo(ca);
+        });
+      if (list.length > limit) {
+        list = list.take(limit).toList();
+      }
+      return Right(list);
+    } catch (e) {
+      return Left(CacheFailure(e.toString()));
+    }
+  }
+
+  bool _matchesCustomer(InvoiceModel invoice, String? customerId) {
+    if (customerId == null) return invoice.customerId == null;
+    return invoice.customerId == customerId;
+  }
+
+  @override
+  Future<Either<Failure, List<Invoice>>> listByCustomer({
+    required String? customerId,
+    int limit = 200,
+  }) async {
+    try {
+      final box = HiveDatabase.invoiceBox;
+      var list = box.values
+          .where((i) => _matchesCustomer(i, customerId))
+          .map((e) => e.toEntity())
+          .toList()
+        ..sort((a, b) {
+          final da = a.confirmedAt ?? a.createdAt;
+          final db = b.confirmedAt ?? b.createdAt;
+          return db.compareTo(da);
         });
       if (list.length > limit) {
         list = list.take(limit).toList();

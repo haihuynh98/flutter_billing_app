@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../features/customer/data/models/customer_model.dart';
 import '../../features/invoice/data/models/invoice_item_model.dart';
 import '../../features/invoice/data/models/invoice_model.dart';
 import '../../features/product/data/models/product_model.dart';
@@ -20,6 +21,7 @@ class HiveDatabase {
   static const String stockBatchBoxName = 'stock_batches';
   static const String stockMovementBoxName = 'stock_movements';
   static const String invoiceBoxName = 'invoices';
+  static const String customerBoxName = 'customers';
 
   static Future<void> init() async {
     await Hive.initFlutter();
@@ -33,6 +35,7 @@ class HiveDatabase {
     await Hive.openBox<StockBatchModel>(stockBatchBoxName);
     await Hive.openBox<StockMovementModel>(stockMovementBoxName);
     await Hive.openBox<InvoiceModel>(invoiceBoxName);
+    await Hive.openBox<CustomerModel>(customerBoxName);
 
     await _runStockMigration();
   }
@@ -59,6 +62,9 @@ class HiveDatabase {
     if (!Hive.isAdapterRegistered(6)) {
       Hive.registerAdapter(InvoiceItemModelAdapter());
     }
+    if (!Hive.isAdapterRegistered(7)) {
+      Hive.registerAdapter(CustomerModelAdapter());
+    }
   }
 
   /// VM tests only: avoids [Hive.initFlutter] / path_provider (not available in widget tests).
@@ -73,6 +79,7 @@ class HiveDatabase {
     await Hive.openBox<StockBatchModel>(stockBatchBoxName);
     await Hive.openBox<StockMovementModel>(stockMovementBoxName);
     await Hive.openBox<InvoiceModel>(invoiceBoxName);
+    await Hive.openBox<CustomerModel>(customerBoxName);
     await _runStockMigration();
   }
 
@@ -130,4 +137,6 @@ class HiveDatabase {
       Hive.box<StockMovementModel>(stockMovementBoxName);
   static Box<InvoiceModel> get invoiceBox =>
       Hive.box<InvoiceModel>(invoiceBoxName);
+  static Box<CustomerModel> get customerBox =>
+      Hive.box<CustomerModel>(customerBoxName);
 }

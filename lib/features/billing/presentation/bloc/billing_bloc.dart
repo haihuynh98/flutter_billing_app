@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../../core/utils/printer_helper.dart';
 import '../../../../core/data/hive_database.dart';
+import '../../../customer/domain/entities/customer.dart';
 import '../../../invoice/domain/entities/invoice.dart';
 import '../../../invoice/domain/entities/invoice_item.dart';
 import '../../../invoice/domain/entities/invoice_status.dart';
@@ -25,6 +26,7 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
   final RemoveInvoiceItemUseCase removeInvoiceItemUseCase;
   final ConfirmInvoiceUseCase confirmInvoiceUseCase;
   final CancelDraftInvoiceUseCase cancelDraftInvoiceUseCase;
+  final SetInvoiceCustomerUseCase setInvoiceCustomerUseCase;
   final ListBatchesByProductUseCase listBatchesByProductUseCase;
 
   BillingBloc({
@@ -36,6 +38,7 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
     required this.removeInvoiceItemUseCase,
     required this.confirmInvoiceUseCase,
     required this.cancelDraftInvoiceUseCase,
+    required this.setInvoiceCustomerUseCase,
     required this.listBatchesByProductUseCase,
   }) : super(const BillingState()) {
     on<ScanBarcodeEvent>(_onScanBarcode);
@@ -49,6 +52,14 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
     on<OpenDraftInvoiceEvent>(_onOpenDraft);
     on<ConfirmInvoiceEvent>(_onConfirmInvoice);
     on<PrintReceiptEvent>(_onPrintReceipt);
+    on<SelectCustomerEvent>(_onSelectCustomer);
+  }
+
+  CreateDraftInvoiceParams _draftCustomerParams(BillingState state) {
+    return CreateDraftInvoiceParams(
+      customerId: state.selectedCustomerId,
+      customerName: state.selectedCustomerName,
+    );
   }
 
   bool _needsNewDraftInvoice() {
@@ -133,7 +144,8 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
   }) async {
     late final Invoice invoice;
     if (_needsNewDraftInvoice()) {
-      final draftR = await createDraftInvoiceUseCase(NoParams());
+      final draftR =
+          await createDraftInvoiceUseCase(_draftCustomerParams(state));
       final created = draftR.fold<Invoice?>((f) {
         emit(state.copyWith(error: f.message));
         return null;
@@ -254,6 +266,36 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
         emit(state.copyWith(currentInvoice: inv, clearError: true));
       },
     );
+  }
+
+  Future<void> _onSelectCustomer(
+      SelectCustomerEvent event, Emitter<BillingState> emit) async {
+    final inv = state.currentInvoice;
+    if (inv != null && inv.status == InvoiceStatus.draft) {
+      final r = await setInvoiceCustomerUseCase(
+        SetInvoiceCustomerParams(
+          invoiceId: inv.id,
+          customerId: event.customerId,
+          customerName: event.customerName,
+        ),
+      );
+      r.fold(
+        (f) => emit(state.copyWith(error: f.message)),
+        (updated) => emit(state.copyWith(
+          currentInvoice: updated,
+          clearPendingCustomer: true,
+          clearError: true,
+        )),
+      );
+      return;
+    }
+
+    emit(state.copyWith(
+      pendingCustomerId: event.customerId,
+      clearPendingCustomerId: event.customerId == null,
+      pendingCustomerName: event.customerName,
+      clearError: true,
+    ));
   }
 
   Future<void> _onConfirmInvoice(

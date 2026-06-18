@@ -209,6 +209,11 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
             'Xác nhận: ${inv.confirmedAt != null ? df.format(inv.confirmedAt!) : '—'}',
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
+          const SizedBox(height: 8),
+          Text(
+            'Khách hàng: ${inv.customerName}',
+            style: TextStyle(color: Colors.grey[700]),
+          ),
           const SizedBox(height: 16),
           ...inv.items.map((i) => ListTile(
                 title: Text(i.productName),

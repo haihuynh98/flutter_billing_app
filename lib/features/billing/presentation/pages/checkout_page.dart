@@ -13,6 +13,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../customer/presentation/widgets/checkout_customer_picker.dart';
 import '../../../invoice/domain/entities/invoice_status.dart';
 import '../../../shop/presentation/bloc/shop_bloc.dart';
 import '../../../warehouse/presentation/bloc/warehouse_bloc.dart';
@@ -105,6 +106,52 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           horizontal: 16, vertical: 16),
                       child: Column(
                         children: [
+                          if (isDraft) ...[
+                            const CheckoutCustomerPicker(),
+                            const SizedBox(height: 16),
+                          ] else if (inv != null) ...[
+                            Container(
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: borderColor),
+                              ),
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.person_outline,
+                                      color: Theme.of(context).primaryColor),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Khách hàng',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.grey[500],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          inv.customerName,
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
                           Container(
                             decoration: BoxDecoration(
                               color: Colors.white,

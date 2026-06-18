@@ -69,6 +69,19 @@ class ConfirmInvoiceEvent extends BillingEvent {
   const ConfirmInvoiceEvent();
 }
 
+class SelectCustomerEvent extends BillingEvent {
+  final String? customerId;
+  final String customerName;
+
+  const SelectCustomerEvent({
+    this.customerId,
+    required this.customerName,
+  });
+
+  @override
+  List<Object?> get props => [customerId, customerName];
+}
+
 class PrintReceiptEvent extends BillingEvent {
   final String shopName;
   final String address1;

@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../customer/domain/entities/customer.dart';
 import 'invoice_item.dart';
 import 'invoice_status.dart';
 
@@ -13,6 +14,10 @@ class Invoice extends Equatable {
   /// Assigned when the invoice is confirmed; used for display and receipt "Mã số".
   final int? sequenceNumber;
 
+  /// `null` means retail / walk-in customer ([RetailCustomer.name]).
+  final String? customerId;
+  final String customerName;
+
   const Invoice({
     required this.id,
     required this.status,
@@ -20,6 +25,8 @@ class Invoice extends Equatable {
     this.confirmedAt,
     this.items = const [],
     this.sequenceNumber,
+    this.customerId,
+    this.customerName = RetailCustomer.name,
   });
 
   double get total =>
@@ -30,6 +37,9 @@ class Invoice extends Equatable {
     DateTime? confirmedAt,
     List<InvoiceItem>? items,
     int? sequenceNumber,
+    String? customerId,
+    bool clearCustomerId = false,
+    String? customerName,
   }) {
     return Invoice(
       id: id,
@@ -38,10 +48,20 @@ class Invoice extends Equatable {
       confirmedAt: confirmedAt ?? this.confirmedAt,
       items: items ?? this.items,
       sequenceNumber: sequenceNumber ?? this.sequenceNumber,
+      customerId: clearCustomerId ? null : (customerId ?? this.customerId),
+      customerName: customerName ?? this.customerName,
     );
   }
 
   @override
-  List<Object?> get props =>
-      [id, status, createdAt, confirmedAt, items, sequenceNumber];
+  List<Object?> get props => [
+        id,
+        status,
+        createdAt,
+        confirmedAt,
+        items,
+        sequenceNumber,
+        customerId,
+        customerName,
+      ];
 }

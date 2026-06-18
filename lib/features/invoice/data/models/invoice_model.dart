@@ -1,5 +1,6 @@
 import 'package:hive/hive.dart';
 
+import '../../../customer/domain/entities/customer.dart';
 import '../../domain/entities/invoice.dart';
 import '../../domain/entities/invoice_status.dart';
 import 'invoice_item_model.dart';
@@ -30,6 +31,12 @@ class InvoiceModel extends HiveObject {
   @HiveField(6)
   final int? sequenceNumber;
 
+  @HiveField(7)
+  final String? customerId;
+
+  @HiveField(8, defaultValue: RetailCustomer.name)
+  final String customerName;
+
   InvoiceModel({
     required this.id,
     required this.statusIndex,
@@ -38,6 +45,8 @@ class InvoiceModel extends HiveObject {
     required this.items,
     required this.totalSnapshot,
     this.sequenceNumber,
+    this.customerId,
+    this.customerName = RetailCustomer.name,
   });
 
   InvoiceStatus get _status => InvoiceStatus.values[statusIndex.clamp(0, 2)];
@@ -49,6 +58,8 @@ class InvoiceModel extends HiveObject {
         confirmedAt: confirmedAt,
         items: items.map((e) => e.toEntity()).toList(),
         sequenceNumber: sequenceNumber,
+        customerId: customerId,
+        customerName: customerName,
       );
 
   factory InvoiceModel.fromEntity(Invoice inv) => InvoiceModel(
@@ -59,5 +70,7 @@ class InvoiceModel extends HiveObject {
         items: inv.items.map(InvoiceItemModel.fromEntity).toList(),
         totalSnapshot: inv.total,
         sequenceNumber: inv.sequenceNumber,
+        customerId: inv.customerId,
+        customerName: inv.customerName,
       );
 }

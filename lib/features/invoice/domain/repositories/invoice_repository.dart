@@ -5,8 +5,16 @@ import '../entities/invoice.dart';
 import '../entities/invoice_item.dart';
 
 abstract class InvoiceRepository {
-  Future<Either<Failure, Invoice>> createDraft();
+  Future<Either<Failure, Invoice>> createDraft({
+    String? customerId,
+    String customerName = 'Khách hàng lẻ',
+  });
   Future<Either<Failure, Invoice?>> getInvoice(String id);
+  Future<Either<Failure, Invoice>> setCustomer({
+    required String invoiceId,
+    String? customerId,
+    required String customerName,
+  });
   Future<Either<Failure, Invoice>> addOrIncrementItem({
     required String invoiceId,
     required InvoiceItem itemDelta,
@@ -26,4 +34,8 @@ abstract class InvoiceRepository {
   Future<Either<Failure, void>> cancelDraft(String id);
   Future<Either<Failure, List<Invoice>>> listDrafts();
   Future<Either<Failure, List<Invoice>>> listConfirmed({int limit = 100});
+  Future<Either<Failure, List<Invoice>>> listByCustomer({
+    required String? customerId,
+    int limit = 200,
+  });
 }
